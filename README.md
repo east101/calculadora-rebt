@@ -32,3 +32,8 @@ Calculadora de sección de cable, caída de tensión y protección para instalac
 
 Cálculo orientativo. No sustituye al proyecto ni a la memoria técnica, y la empresa distribuidora determina la solución final de la instalación de enlace.
 
+## Licencia
+
+© 2026 east101. Esta obra está bajo licencia Creative Commons
+Reconocimiento-NoComercial-CompartirIgual 4.0 Internacional (CC BY-NC-SA 4.0).
+https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es
