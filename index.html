@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Calculadora de sección de cable, caída de tensión y protección según el REBT.">
+<meta name="theme-color" content="#1f3b63">
+<title>Calculadora REBT</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: pasos numerados a la izquierda, resultado fijo a la derecha; en móvil una columna y barra de resultado abajo. */
+:root{
+  --bg:#f0f1f3; --panel:#ffffff; --ink:#171a1f; --mute:#5d646e; --line:#dcdfe4; --field:#f6f7f9;
+  --accent:#1f3b63; --accent-ink:#ffffff; --accent-soft:#e3e9f2; --sun:#e0a030;
+  --ok:#17773a; --ok-bg:#dff3e5; --warn:#8a5a00; --warn-bg:#fcefcf; --bad:#a8271e; --bad-bg:#fbe2df;
+  --fase:#7a4a2b; --fase2:#222426; --fase3:#8d9296; --neutro:#3c8fd6; --pe1:#3f9d3a; --pe2:#e9d02b; --cu:#cf7a3c; --al:#c3c9cd;
+  --shadow:0 1px 2px rgba(20,24,31,.06),0 6px 18px rgba(20,24,31,.06);
+  --f-ui:"Figtree",system-ui,"Segoe UI",Roboto,sans-serif; --f-num:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101216; --panel:#1a1d23; --ink:#eceef1; --mute:#9ba2ad; --line:#2d323b; --field:#13161b;
+  --accent:#9dbcec; --accent-ink:#0c1a30; --accent-soft:#222c3d; --sun:#f2b656;
+  --ok:#74d692; --ok-bg:#15301f; --warn:#f1c669; --warn-bg:#352b10; --bad:#ffa096; --bad-bg:#3b1b18;
+  --fase:#a8734f; --fase2:#4d5356; --fase3:#b9bec2; --neutro:#5aa9ea; --pe1:#57b852; --pe2:#e9d02b; --cu:#dd8f52; --al:#cfd5d8;
+  --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101216; --panel:#1a1d23; --ink:#eceef1; --mute:#9ba2ad; --line:#2d323b; --field:#13161b;
+  --accent:#9dbcec; --accent-ink:#0c1a30; --accent-soft:#222c3d; --sun:#f2b656;
+  --ok:#74d692; --ok-bg:#15301f; --warn:#f1c669; --warn-bg:#352b10; --bad:#ffa096; --bad-bg:#3b1b18;
+  --fase:#a8734f; --fase2:#4d5356; --fase3:#b9bec2; --neutro:#5aa9ea; --pe1:#57b852; --pe2:#e9d02b; --cu:#dd8f52; --al:#cfd5d8;
+  --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:400 15.5px/1.45 var(--f-ui);padding-inline:16px;padding-block:22px 56px}
+.wrap{max-width:1140px;margin-inline:auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;align-items:center;gap:12px}
+.ver{font:700 11px var(--f-ui);background:var(--accent-soft);color:var(--accent);padding:3px 8px;border-radius:99px;vertical-align:4px;margin-left:6px;letter-spacing:.03em}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+h1{font:700 24px/1.1 var(--f-ui);margin:0;letter-spacing:-.01em}
+header p{margin:2px 0 0;color:var(--mute);font-size:14px}
+.cols{display:grid;grid-template-columns:minmax(0,11fr) minmax(0,10fr);gap:20px;align-items:start}
+.pasos{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.res{position:sticky;top:calc(env(safe-area-inset-top,0px) + 14px)}
+.paso{display:flex;align-items:center;gap:10px}
+.paso b{width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font:700 14px var(--f-ui);flex:none}
+h2{font:700 17px/1.2 var(--f-ui);margin:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.full{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:500;color:var(--mute);min-width:0}
+input,select{font:500 16px var(--f-ui);color:var(--ink);background:var(--field);border:1.5px solid var(--line);border-radius:10px;padding:10px 11px;width:100%;min-width:0}
+input[type=number]{font-family:var(--f-num);font-size:15px}
+input[readonly],select:disabled{opacity:.8;cursor:not-allowed;border-style:dashed}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+.chk{flex-direction:row;align-items:center;gap:9px;color:var(--ink);font-size:14.5px}
+.chk input{width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.seg button{font:600 15px var(--f-ui);padding:11px 10px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);border-radius:10px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tipos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tipos button{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:12px 6px 10px;border:1.5px solid var(--line);background:var(--field);color:var(--ink);border-radius:12px;cursor:pointer;font:600 14px/1.2 var(--f-ui);min-width:0}
+.tipos button small{font:500 11.5px var(--f-ui);color:var(--mute)}
+.tipos button svg{width:30px;height:30px;color:var(--accent)}
+.tipos button[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent)}
+details{border-top:1.5px solid var(--line);padding-top:12px}
+.card > details:first-child{border-top:0;padding-top:0}
+summary{cursor:pointer;font:600 15px var(--f-ui);color:var(--ink)}
+summary small{font-weight:400;color:var(--mute);margin-left:4px}
+details .grid{margin-top:12px}
+.hint{font-size:13px;color:var(--mute);margin:0}
+.nota{background:var(--accent-soft);color:var(--ink);padding:10px 12px;border-radius:10px;font-size:13.5px;margin:0}
+.estado{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;font:700 18px var(--f-ui)}
+.estado svg{width:26px;height:26px;flex:none}
+.estado.ok{background:var(--ok-bg);color:var(--ok)} .estado.bad{background:var(--bad-bg);color:var(--bad)}
+.estado small{display:block;font:500 13px var(--f-ui);opacity:.9}
+.hero{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:6px 0 2px}
+.hero .big{font:700 46px/1 var(--f-num);letter-spacing:-.03em}
+.hero .big span{font:600 17px var(--f-ui);color:var(--mute);margin-left:5px;letter-spacing:0}
+.hero .sub{color:var(--mute);font-size:13.5px}
+.cable{max-width:100%;height:auto}
+.cable text{font:600 11px var(--f-num);fill:var(--mute)}
+.barras{display:flex;flex-direction:column;gap:12px}
+.barra .cab{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;font-weight:600}
+.barra .cab span:last-child{font-family:var(--f-num);font-size:12.5px;color:var(--mute);text-align:right}
+.barra .pista{height:10px;border-radius:99px;background:var(--field);border:1px solid var(--line);overflow:hidden;margin-top:5px}
+.barra .pista i{display:block;height:100%;border-radius:99px;background:var(--ok)}
+.barra.warn .pista i{background:var(--sun)} .barra.bad .pista i{background:var(--bad)}
+dl{margin:0;display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 14px;padding:11px 0;border-top:1.5px solid var(--line)}
+.row dt{font-weight:600} .row dd{margin:0;font:700 15px var(--f-num);text-align:right;font-variant-numeric:tabular-nums}
+.row p{grid-column:1/-1;margin:0;font-size:13px;color:var(--mute)}
+.pill{display:inline-block;font:700 11px var(--f-ui);padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:1px}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.warn{background:var(--warn-bg);color:var(--warn)}
+.avisos{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.avisos li{background:var(--warn-bg);color:var(--warn);padding:10px 12px;border-radius:10px;font-size:14px}
+.avisos li.err{background:var(--bad-bg);color:var(--bad)}
+.form{font:500 12.5px/1.6 var(--f-num);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;overflow-x:auto;white-space:pre;margin:10px 0 0}
+#out{display:flex;flex-direction:column;gap:14px}
+.acc{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font:700 15px var(--f-ui);padding:11px 16px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+#copiado{font-size:13.5px;color:var(--ok);font-weight:600}
+#resumen{width:100%;min-height:150px;font:500 12.5px/1.5 var(--f-num);background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
+footer{color:var(--mute);font-size:12.5px;max-width:75ch}
+.barraFija{display:none}
+@media (max-width:880px){
+  .cols{grid-template-columns:minmax(0,1fr)} .res{position:static}
+  body{padding-block-end:96px}
+  .barraFija{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:5;align-items:center;justify-content:space-between;gap:12px;
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1.5px solid var(--line);box-shadow:0 -4px 16px rgba(20,24,31,.10)}
+  .barraFija b{font:700 20px var(--f-num)} .barraFija span{display:block;font-size:12.5px;font-weight:600}
+  .barraFija .ok{color:var(--ok)} .barraFija .bad{color:var(--bad)}
+  .barraFija a{font:700 14px var(--f-ui);padding:10px 14px;border-radius:10px;background:var(--accent);color:var(--accent-ink);text-decoration:none;flex:none}
+}
+@media (max-width:420px){.tipos{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body style="margin:0">
+
+
+<div class="wrap">
+<header>
+  <div class="logo" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 5 13.5h6L10 22l9-12h-6.5L13 2Z"/></svg></div>
+  <div><h1>Calculadora REBT <span class="ver">Beta 1</span></h1><p>Sección de cable, caída de tensión y protección en baja tensión</p></div>
+</header>
+<div class="cols">
+<div class="pasos">
+<section class="card" aria-label="Qué quieres hacer">
+  <div class="paso"><b>1</b><h2>Qué quieres calcular</h2></div>
+  <div class="seg" id="modoSeg" role="group" aria-label="Modo">
+    <button type="button" id="modo-dim" data-m="dim">Dimensionar la línea</button>
+    <button type="button" id="modo-comp" data-m="comp">Comprobar una sección</button>
+  </div>
+  <label id="lComp" hidden>Sección a comprobar (mm²)<select id="sComp"></select></label>
+  <div class="tipos" id="tipoSeg" role="group" aria-label="Tipo de línea"></div>
+  <div class="grid">
+    <label class="full" id="lNorma">Criterio
+      <select id="norma"><option value="rebt">REBT (general)</option><option value="ede">e-distribución (NRZ103)</option></select></label>
+    <label class="full" id="lEsq">Esquema de instalación<select id="esq"></select></label>
+  </div>
+  <p class="nota" id="vivInfo" hidden></p>
+</section>
+
+<section class="card" id="cCarga" aria-label="Carga">
+  <div class="paso"><b>2</b><h2 id="hCarga">La carga</h2></div>
+  <div class="grid" id="gCarga">
+    <label>Dato de partida<select id="modoCarga"><option value="P">Potencia</option><option value="I">Intensidad</option></select></label>
+    <label id="lPot">Potencia (kW)<input id="pot" type="number" inputmode="decimal" min="0" step="0.01" value="100"></label>
+    <label id="lInt" hidden>Intensidad (A)<input id="int" type="number" inputmode="decimal" min="0" step="0.1" value="63"></label>
+    <label>Sistema<select id="sist"><option value="3">Trifásico 400 V</option><option value="1">Monofásico 230 V</option></select></label>
+    <label>cos φ<input id="cos" type="number" inputmode="decimal" min="0.1" max="1" step="0.01" value="0.9"></label>
+    <p class="hint full">El reglamento no fija el cos φ: es un dato de la carga. Se propone 0,9 con cargas mezcladas (el de los ejemplos de la guía técnica) y 1 en circuitos resistivos o de recarga.</p>
+  </div>
+</section>
+
+<section class="card" aria-label="Cable">
+  <div class="paso"><b id="nCable">3</b><h2>El cable y su recorrido</h2></div>
+  <div class="grid">
+    <label><span id="tL">Longitud (m)</span><input id="L" type="number" inputmode="decimal" min="0" step="0.5" value="25"></label>
+    <label><span id="tCdt">Caída máxima reglamentaria (%)</span><input id="cdt" type="number" inputmode="decimal" min="0.1" step="0.1" value="0.5"></label>
+    <label id="lMat">Material<select id="mat"><option value="Cu">Cobre</option><option value="Al">Aluminio</option></select></label>
+    <label id="lAisl">Aislamiento<select id="aisl"></select></label>
+    <label class="full" id="lMet">Forma de instalación<select id="metodo"></select></label>
+    <label class="full" id="lCable" hidden>Tipo de cable<select id="cable"><option value="uni">Terna de cables unipolares</option><option value="tri">Un cable tripolar o tetrapolar</option></select></label>
+    <label class="full" id="lFam" hidden>Cable trenzado<select id="fam"><option value="al">Aluminio sin neutro fiador</option><option value="alm">Aluminio con neutro fiador de Almelec (tensado)</option><option value="cu">Cobre</option></select></label>
+    <label class="full" id="lTend" hidden>Tendido<select id="tendido"><option value="pos">Posado sobre fachada</option><option value="tens">Tensado con fiador de acero</option></select></label>
+  </div>
+  <details id="corr">
+    <summary>Correcciones <small>temperatura y agrupamiento</small></summary>
+    <div class="grid">
+      <label><span id="tTamb">Temperatura ambiente (°C)</span><input id="tamb" type="number" inputmode="decimal" step="1" value="40"></label>
+      <label><span id="tAgr">Circuitos agrupados</span><select id="agr"></select></label>
+      <label id="lRes" hidden>Resistividad del terreno (K·m/W)<select id="resist"></select></label>
+      <label id="lProf" hidden>Profundidad (m)<select id="prof"></select></label>
+      <label id="lDist" hidden>Separación entre ternas<select id="dist"></select></label>
+      <label class="chk full" id="lTubo" hidden><input id="entubo" type="checkbox">Cable en el interior de tubo (factor 0,8)</label>
+      <label class="chk full" id="lSol" hidden><input id="sol" type="checkbox">Expuesto directamente al sol (factor 0,9)</label>
+    </div>
+  </details>
+  <details id="crit">
+    <summary>Criterios de cálculo <small>temperatura del conductor y fusible</small></summary>
+    <div class="grid">
+      <label class="full">Temperatura del conductor para la caída de tensión
+        <select id="critT"><option value="real">Real estimada según la carga (por defecto)</option><option value="max">Máxima del aislamiento (70 o 90 °C)</option><option value="20">20 °C (cable frío)</option></select></label>
+      <p class="hint full" id="critHint"></p>
+      <label class="chk full" id="lCond2"><input id="cond2" type="checkbox" checked>Aplicar la segunda condición de sobrecarga del fusible (I2 ≤ 1,45 · Icab)</label>
+      <p class="hint full" id="hCond2">Un fusible gG no funde a su intensidad nominal: solo garantiza fundir a 1,6 veces (I2). Esta condición exige que ese valor no supere 1,45 veces lo que aguanta el cable, lo que equivale a Iprot ≤ 0,91 · Icab. Es la que pide el reglamento (ITC-BT-22); si la desmarcas solo se comprueba Imax ≤ Iprot ≤ Icab.</p>
+    </div>
+  </details>
+</section>
+</div>
+
+<section class="card res" id="res" aria-label="Resultado" aria-live="polite">
+  <div id="out"></div>
+  <div class="acc"><button class="btn" id="copiar" type="button">Copiar resumen</button><span id="copiado" role="status"></span></div>
+  <textarea id="resumen" readonly hidden aria-label="Resumen del cálculo"></textarea>
+</section>
+</div>
+<footer>Versión beta 1 · 8-10-2026. Cálculo orientativo. Base: REBT (texto consolidado a 3-9-2025), guía técnica (anexo 2 y BT-22), UNE-HD 60364-5-52:2022 según recopilación de Prysmian, y guía NRZ103 ed. 7 de e-distribución. La empresa distribuidora determina la solución final de la instalación de enlace; la nomenclatura CPM/TMF es de e-distribución, consulta el equivalente en tu distribuidora.</footer>
+</div>
+<div class="barraFija" id="barra"><div><b id="barraS">–</b><span id="barraE"></span></div><a href="#res">Ver resultado</a></div>
+
+<script>
+/* Núcleo de cálculo. Sin DOM: se prueba con Node y se incrusta en la página. */
+const D = (() => {
+  const N = null;
+  const COLS = ["2","3","4","5a","5b","6a","6b","7a","7b","8a","8b","9a","9b","10a","10b","11","12","13"];
+  // UNE-HD 60364-5-52:2022, tablas C.52.1 bis 1 y bis 2 (recopilación Prysmian), aire 40 °C
+  const CU = {
+    1.5:[11,12,13,13,15,15,15,15,17,17,18,19,18,19,21,22,22,25],
+    2.5:[15,16,17,18,20,21,21,21,24,23,25,26,25,26,28,30,30,34],
+    4:[20,21,23,24,27,28,28,28,32,31,34,35,34,35,38,41,41,46],
+    6:[25,27,30,31,35,36,36,36,40,40,44,44,44,44,49,53,53,59],
+    10:[34,37,40,44,46,50,49,50,55,55,60,61,60,61,68,73,73,82],
+    16:[45,49,53,59,62,66,66,66,73,74,80,82,80,82,91,97,97,110],
+    25:[59,64,70,77,81,84,86,84,96,96,106,104,106,104,116,123,123,147],
+    35:[72,77,86,96,99,104,106,104,116,119,131,129,131,129,144,154,154,182],
+    50:[86,94,103,116,118,125,128,125,140,145,159,157,159,157,175,188,188,220],
+    70:[109,118,130,146,149,160,163,160,177,185,201,202,201,202,224,244,244,282],
+    95:[131,143,156,175,179,194,197,194,212,224,241,245,241,245,271,298,298,343],
+    120:[150,164,179,202,207,225,227,225,244,260,278,285,278,285,315,348,348,398],
+    150:[171,188,196,224,236,260,259,260,273,299,304,330,304,330,358,401,401,459],
+    185:[194,213,222,256,268,297,295,297,309,341,349,378,349,378,409,460,460,523],
+    240:[227,249,258,299,315,348,346,348,362,401,410,447,410,447,480,545,545,618],
+    300:[259,285,295,343,360,398,396,398,414,461,468,516,468,516,549,631,631,713],
+    400:[N,N,N,434,N,507,N,N,503,N,560,N,630,N,684,749,812,855],
+    500:[N,N,N,496,N,584,N,N,575,N,644,N,725,N,786,861,938,986],
+    630:[N,N,N,570,N,676,N,N,660,N,744,N,840,N,908,990,1089,1141]
+  };
+  const ALC = ["5b","6b","7b","8b","9b","10b","11","12","13"];
+  const AL = {
+    10:[37,40,44,47,47,53,56,56,N],16:[50,53,58,65,65,70,76,76,82],
+    25:[65,69,76,82,82,88,92,92,110],35:[79,86,94,102,102,109,115,115,137],
+    50:[95,103,113,124,124,133,140,140,167],70:[119,129,142,158,158,170,180,180,216],
+    95:[143,156,171,191,191,207,219,219,263],120:[164,179,197,220,220,239,255,255,307],
+    150:[187,206,218,238,238,277,295,295,354],185:[212,233,248,273,273,316,338,338,407],
+    240:[248,273,289,319,319,372,399,399,482],300:[285,313,331,366,366,429,462,462,558],
+    400:[N,N,408,455,481,544,557,N,673],500:[N,N,N,521,555,625,643,N,779],630:[N,N,N,599,643,723,747,N,906]
+  };
+  // Valores calculados por Prysmian (no figuran en la norma)
+  const esPrysmian = (mat, s, col) => s >= 400 || (col === "13" && (mat === "Cu" ? s <= 16 : s === 16));
+  const METODO = {
+    A1:{n:"A1 · Unipolares en tubo en pared aislante", ag:"haz", PVC3:"3",PVC2:"4",XLPE3:"6b",XLPE2:"7b", tubo:"emp"},
+    A2:{n:"A2 · Multiconductor en tubo en pared aislante", ag:"haz", PVC3:"2",PVC2:"3",XLPE3:"5b",XLPE2:"6b", tubo:"emp"},
+    B1:{n:"B1 · Unipolares en tubo en superficie o empotrado en obra", ag:"haz", PVC3:"5a",PVC2:"6a",XLPE3:"8b",XLPE2:"10b", tubo:"sup"},
+    B2:{n:"B2 · Multiconductor en tubo en superficie o empotrado en obra", ag:"haz", PVC3:"4",PVC2:"5a",XLPE3:"7b",XLPE2:"8b", tubo:"sup"},
+    C:{n:"C · Cable directamente sobre pared", ag:"capa", PVC3:"6a",PVC2:"8a",XLPE3:"9b",XLPE2:"11"},
+    E:{n:"E · Multiconductor al aire o en bandeja perforada", ag:"band", PVC3:"7a",PVC2:"9a",XLPE3:"10b",XLPE2:"12"},
+    F:{n:"F · Unipolares en contacto al aire o en bandeja perforada", ag:"band", PVC3:"8a",PVC2:"10a",XLPE3:"11",XLPE2:"13"}
+  };
+  // ITC-BT-07 tablas 4 (Al) y 5 (Cu): [uni XLPE, uni EPR, uni PVC, tri XLPE, tri EPR, tri PVC]
+  const ENT = {
+    Al:{16:[97,94,86,90,86,76],25:[125,120,110,115,110,98],35:[150,145,130,140,135,120],50:[180,175,155,165,160,140],
+      70:[220,215,190,205,205,170],95:[260,255,225,240,235,210],120:[295,290,260,275,270,235],150:[330,325,290,310,305,265],
+      185:[375,365,325,350,345,300],240:[430,420,380,405,395,350],300:[485,475,430,460,445,395],400:[550,540,480,520,500,445],
+      500:[615,605,525,N,N,N],630:[690,680,600,N,N,N]},
+    Cu:{6:[72,70,63,66,64,56],10:[96,94,85,88,85,75],16:[125,120,110,115,110,97],25:[160,155,140,150,140,125],
+      35:[190,185,170,180,175,150],50:[230,225,200,215,205,180],70:[280,270,245,260,250,220],95:[335,325,290,310,305,265],
+      120:[380,375,335,355,350,305],150:[425,415,370,400,390,340],185:[480,470,420,450,440,385],240:[550,540,485,520,505,445],
+      300:[620,610,550,590,565,505],400:[705,690,615,665,645,570],500:[790,775,685,N,N,N],630:[885,870,770,N,N,N]}
+  };
+  const RESIST = {v:[0.8,0.85,0.9,1,1.1,1.2,1.4,1.65,2,2.5,2.8], uni:[1.09,1.06,1.04,1,0.96,0.93,0.87,0.81,0.75,0.68,0.66], tri:[1.07,1.05,1.03,1,0.97,0.94,0.89,0.84,0.78,0.71,0.69]};
+  const AGR_ENT = {n:[2,3,4,5,6,8,10,12], d:{"0":[0.80,0.70,0.64,0.60,0.56,0.53,0.50,0.47],"0.07":[0.85,0.75,0.68,0.64,0.60,0.56,0.53,0.50],
+    "0.10":[0.85,0.76,0.69,0.65,0.62,0.58,0.55,0.53],"0.15":[0.87,0.77,0.72,0.68,0.66,0.62,0.59,0.57],
+    "0.20":[0.88,0.79,0.74,0.70,0.68,0.64,0.62,0.60],"0.25":[0.89,0.80,0.76,0.72,0.70,0.66,0.64,0.62]}};
+  const PROF = {v:[0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.2], f:[1.03,1.02,1.01,1,0.99,0.98,0.97,0.95]};
+  // ITC-BT-06 tablas 3, 4 y 5 (XLPE, 40 °C). f: fases, s: sección de fase
+  const AEREA = [
+    {fam:"alm", n:"1 x 25 Al/54,6 Alm", mat:"Al", f:1, s:25, I:110},{fam:"alm", n:"1 x 50 Al/54,6 Alm", mat:"Al", f:1, s:50, I:165},
+    {fam:"alm", n:"3 x 25 Al/54,6 Alm", mat:"Al", f:3, s:25, I:100},{fam:"alm", n:"3 x 50 Al/54,6 Alm", mat:"Al", f:3, s:50, I:150},
+    {fam:"alm", n:"3 x 95 Al/54,6 Alm", mat:"Al", f:3, s:95, I:230},{fam:"alm", n:"3 x 150 Al/80 Alm", mat:"Al", f:3, s:150, I:305},
+    {fam:"al", n:"2 x 16 Al", mat:"Al", f:1, s:16, I:[73,81]},{fam:"al", n:"2 x 25 Al", mat:"Al", f:1, s:25, I:[101,109]},
+    {fam:"al", n:"4 x 16 Al", mat:"Al", f:3, s:16, I:[67,72]},{fam:"al", n:"4 x 25 Al", mat:"Al", f:3, s:25, I:[90,97]},
+    {fam:"al", n:"4 x 50 Al", mat:"Al", f:3, s:50, I:[133,144]},{fam:"al", n:"3 x 95/50 Al", mat:"Al", f:3, s:95, I:[207,223]},
+    {fam:"al", n:"3 x 150/95 Al", mat:"Al", f:3, s:150, I:[277,301]},
+    {fam:"cu", n:"2 x 10 Cu", mat:"Cu", f:1, s:10, I:[77,85]},{fam:"cu", n:"4 x 10 Cu", mat:"Cu", f:3, s:10, I:[65,72]},
+    {fam:"cu", n:"4 x 16 Cu", mat:"Cu", f:3, s:16, I:[86,95]}
+  ];
+  const AGR_AER = {1:1, 2:0.89, 3:0.80, 4:0.75};
+  // Agrupamiento en interiores (UNE-HD 60364-5-52, cables agrupados). Orientativo, sin contrastar.
+  // UNE-HD 60364-5-52, tabla C.52.2 bis: enterrados (D1/D2), 25 °C, 2,5 K·m/W, 0,70 m
+  const UNE_S = [1.5,2.5,4,6,10,16,25,35,50,70,95,120,150,185,240,300];
+  const UNE_D = {
+    Cu:{PVC2:[20,27,36,44,59,76,98,118,140,173,205,233,264,296,342,387], PVC3:[17,22,29,37,49,63,81,97,115,143,170,192,218,245,282,319],
+        XLPE2:[24,32,42,53,70,91,116,140,166,204,241,275,311,348,402,455], XLPE3:[21,27,35,44,58,75,96,117,138,170,202,230,260,291,336,380]},
+    Al:{XLPE2:[N,N,N,N,53,70,89,107,126,156,185,211,239,267,309,349], XLPE3:[N,N,N,N,45,58,74,90,107,132,157,178,201,226,261,295]}};
+  // Tabla B.52.16 (cables en conductos enterrados) y B.52.19-B (circuitos unipolares en tubos enterrados)
+  const RESIST_D = {v:[0.5,0.7,1,1.5,2,2.5,3], f:[1.28,1.20,1.18,1.10,1.05,1,0.96]};
+  const AGR_D = {n:[2,3,4,5,6], d:{"0":[0.80,0.70,0.65,0.60,0.60],"0.25":[0.90,0.80,0.75,0.70,0.70],"0.50":[0.90,0.85,0.80,0.80,0.80],"1.0":[0.95,0.90,0.90,0.90,0.90]}};
+  // Tabla B.52.17: agrupamiento al aire
+  const AGR_N = [1,2,3,4,5,6,7,8,9,12,16,20];
+  const AGR_INT = {
+    haz:{n:"agrupados en haz o en el mismo tubo o canal", f:[1,0.80,0.70,0.65,0.60,0.57,0.54,0.52,0.50,0.45,0.41,0.38]},
+    capa:{n:"en una capa sobre pared o bandeja no perforada", f:[1,0.85,0.79,0.75,0.73,0.72,0.72,0.71,0.70]},
+    band:{n:"en una capa sobre bandeja perforada", f:[1,0.88,0.82,0.77,0.75,0.73,0.73,0.72,0.72]}};
+  const MET_TIPO = {lga:["A1","B1","ENT"], di:["A1","A2","B1","B2","ENT"], int:["A1","A2","B1","B2","C","E","F"], ve:["A1","A2","B1","B2","C","E","F"], fv:["A1","A2","B1","B2","C","E","F"]};
+  // ITC-BT-14 tabla 1
+  const LGA = {"10":[10,75],"16Cu":[10,75],"16Al":[16,75],"25":[16,110],"35":[16,110],"50":[25,125],"70":[35,140],"95":[50,140],"120":[70,160],"150":[70,160],"185":[95,180],"240":[120,200]};
+  // ITC-BT-07 tabla 1
+  const NEU07 = {"6":6,"10":10,"16Cu":10,"16Al":16,"25":16,"35":16,"50":25,"70":35,"95":50,"120":70,"150":70,"185":95,"240":120,"300":150,"400":185};
+  // ITC-BT-21: diámetro exterior por nº de conductores (1..5); tabla 9 enterrado (≤6)
+  const T2 = {1.5:[12,12,16,16,16],2.5:[12,12,16,16,20],4:[12,16,20,20,20],6:[12,16,20,20,25],10:[16,20,25,32,32],16:[16,25,32,32,32],25:[20,32,32,40,40],35:[25,32,40,40,50],50:[25,40,50,50,50],70:[32,40,50,63,63],95:[32,50,63,63,75],120:[40,50,63,75,75],150:[40,63,75,75,N],185:[50,63,75,N,N],240:[50,75,N,N,N]};
+  const T5 = {1.5:[12,12,16,16,20],2.5:[12,16,20,20,20],4:[12,16,20,20,25],6:[12,16,25,25,25],10:[16,25,25,32,32],16:[20,25,32,32,40],25:[25,32,40,40,50],35:[25,40,40,50,50],50:[32,40,50,50,63],70:[32,50,63,63,63],95:[40,50,63,75,75],120:[40,63,75,75,N],150:[50,63,75,N,N],185:[50,75,N,N,N],240:[63,75,N,N,N]};
+  const T9 = {1.5:25,2.5:32,4:40,6:50,10:63,16:63,25:90,35:90,50:110,70:125,95:140,120:160,150:180,185:180,240:225};
+  const GG = [2,4,6,10,16,20,25,32,40,50,63,80,100,125,160,200,250,315,400,500,630];
+  const IA = [6,10,16,20,25,32,40,50,63,80,100,125,160,200,250,315,400,500,630];
+  const CGP = [100,160,250,400];
+  const TIPOS = {
+    lga:{n:"Línea general de alimentación", itc:"ITC-BT-14"},
+    di:{n:"Derivación individual", itc:"ITC-BT-15"},
+    int:{n:"Circuito interior de vivienda", itc:"ITC-BT-25"},
+    ve:{n:"Recarga de vehículo eléctrico", itc:"ITC-BT-52"},
+    sub:{n:"Red subterránea", itc:"ITC-BT-07"},
+    aer:{n:"Red aérea trenzada", itc:"ITC-BT-06"}
+  };
+  const ESQ = {
+    lga:[{id:"unica", n:"CGP → centralización única de contadores", cdt:0.5},{id:"parcial", n:"CGP → centralizaciones parciales por plantas", cdt:1}],
+    di:[{id:"unica", n:"Desde centralización única", cdt:1, fus:"Fusible de seguridad de la centralización"},
+        {id:"parcial", n:"Desde centralización parcial por plantas", cdt:0.5, fus:"Fusible de seguridad de la centralización"},
+        {id:"cpm", n:"Desde CPM (un solo usuario, sin LGA)", cdt:1.5, fus:"Fusible de la CPM"},
+        {id:"tmf", n:"Desde TMF1 / TMF10 (un solo usuario)", cdt:1.5, fus:"Fusible del conjunto TMF"}],
+    int:[
+      {id:"C1", n:"C1 · Iluminación", In:10, smin:1.5, tubo:16, cdt:3},
+      {id:"C2", n:"C2 · Tomas de uso general y frigorífico", In:16, smin:2.5, tubo:20, cdt:3},
+      {id:"C3", n:"C3 · Cocina y horno", In:25, smin:6, tubo:25, cdt:3},
+      {id:"C4", n:"C4 · Lavadora, lavavajillas y termo", In:20, smin:4, tubo:20, cdt:3, nota:"Cada toma del C4 puede derivarse con 2,5 mm² desde una caja del circuito de 4 mm²."},
+      {id:"C4d", n:"C4 desdoblado · un aparato por circuito", In:16, smin:2.5, tubo:20, cdt:3, nota:"C4 desdoblado en circuitos independientes de 16 A por aparato (nota 8 de la tabla 1). Sección de 2,5 mm² por analogía con las tomas de 16 A; la tabla no la da expresamente."},
+      {id:"C5", n:"C5 · Baño y auxiliares de cocina", In:16, smin:2.5, tubo:20, cdt:3},
+      {id:"C6", n:"C6 · Iluminación adicional (tipo C1)", In:10, smin:1.5, tubo:16, cdt:3},
+      {id:"C7", n:"C7 · Tomas adicionales (tipo C2)", In:16, smin:2.5, tubo:20, cdt:3},
+      {id:"C8", n:"C8 · Calefacción eléctrica", In:25, smin:6, tubo:25, cdt:3, nota:"Potencia máxima por circuito: 5.750 W."},
+      {id:"C9", n:"C9 · Aire acondicionado", In:25, smin:6, tubo:25, cdt:3, nota:"Potencia máxima por circuito: 5.750 W."},
+      {id:"C10", n:"C10 · Secadora", In:16, smin:2.5, tubo:20, cdt:3},
+      {id:"C11", n:"C11 · Automatización y seguridad", In:10, smin:1.5, tubo:16, cdt:3, nota:"Potencia máxima por circuito: 2.300 W."}
+    ]
+  };
+  return {COLS,CU,ALC,AL,METODO,ENT,RESIST,AGR_ENT,PROF,AEREA,AGR_AER,AGR_INT,LGA,NEU07,T2,T5,T9,GG,IA,CGP,TIPOS,ESQ,esPrysmian,MET_TIPO,UNE_S,UNE_D,RESIST_D,AGR_D,AGR_N};
+})();
+
+const fmt = (x, d = 1) => (x == null || !isFinite(x)) ? "–" : x.toLocaleString("es-ES", {minimumFractionDigits: d, maximumFractionDigits: d});
+const fmtS = s => String(s).replace(".", ",");
+
+function gammaT(mat, T) {
+  const p = mat === "Cu" ? [1/56, 1/48, 1/44] : [1/35, 1/30, 1/28];
+  const rho = T <= 70 ? p[0] + (p[1] - p[0]) * (T - 20) / 50 : p[1] + (p[2] - p[1]) * (T - 70) / 20;
+  return 1 / rho;
+}
+const tmaxAisl = a => a === "PVC" ? 70 : 90;
+const fTemp = (tmax, ta, tref) => (ta >= tmax) ? 0 : Math.sqrt((tmax - ta) / (tmax - tref));
+
+/* Intensidad de tabla (sin corregir) para una sección. Devuelve {I, nota} o null */
+const esUneD = o => o.tipo === "lga" && o.metodo === "ENT";
+function iTabla(o, s) {
+  const tri = o.fases === 3;
+  if (esUneD(o)) {
+    const fila = (D.UNE_D[o.mat] || {})[(o.aisl === "PVC" ? "PVC" : "XLPE") + (tri ? 3 : 2)], i = D.UNE_S.indexOf(s);
+    const I = fila && i >= 0 ? fila[i] : null;
+    return I == null ? null : {I, nota: "UNE-HD 60364-5-52, tabla C.52.2 bis (cables en conductos enterrados)"};
+  }
+  if (o.tipo === "sub" || o.metodo === "ENT") {
+    const row = D.ENT[o.mat][s]; if (!row) return null;
+    const unip = o.tipo === "sub" ? o.cable === "uni" : true;
+    const ai = {XLPE:0, EPR:1, PVC:2}[o.aisl] + (unip ? 0 : 3);
+    let I = row[ai]; if (I == null) return null;
+    let nota = "ITC-BT-07, tabla " + (o.mat === "Cu" ? "5" : "4");
+    if (o.mat === "Al" && s === 70 && ai === 4) nota += " (valor del BOE 220 A corregido a 205 A por posible errata)";
+    if (!tri) { I *= 1.225; nota += " × 1,225 (dos conductores)"; }
+    return {I, nota};
+  }
+  if (o.tipo === "aer") return null;
+  const m = D.METODO[o.metodo]; if (!m) return null;
+  const a = o.aisl === "PVC" ? "PVC" : "XLPE";
+  const col = m[a + (tri ? 3 : 2)];
+  let I;
+  if (o.mat === "Cu") { const r = D.CU[s]; I = r && r[D.COLS.indexOf(col)]; }
+  else { if (a === "PVC") return null; const r = D.AL[s]; const i = D.ALC.indexOf(col); I = r && i >= 0 ? r[i] : null; }
+  if (I == null) return null;
+  let nota = "UNE-HD 60364-5-52:2022, columna " + col;
+  if (D.esPrysmian(o.mat, s, col)) nota += " (valor calculado por Prysmian, no normativo)";
+  return {I, nota, prys: D.esPrysmian(o.mat, s, col)};
+}
+
+function factores(o) {
+  const tmax = tmaxAisl(o.aisl), L = [];
+  let F = 1;
+  const add = (n, v) => { if (Math.abs(v - 1) > 1e-9) L.push({n, v}); F *= v; };
+  if (o.tipo === "aer") {
+    add("Temperatura ambiente " + o.tamb + " °C", fTemp(90, o.tamb, 40));
+    add("Agrupación de " + (o.agr >= 4 ? "más de 3" : o.agr) + " cables", D.AGR_AER[Math.min(o.agr, 4)]);
+    if (o.sol) add("Exposición directa al sol", 0.9);
+  } else if (esUneD(o)) {
+    add("Temperatura del terreno " + o.tamb + " °C", fTemp(tmax, o.tamb, 25));
+    const i = D.RESIST_D.v.indexOf(o.resist);
+    add("Resistividad térmica " + fmtS(o.resist) + " K·m/W", i < 0 ? 1 : D.RESIST_D.f[i]);
+    if (o.agr > 1) { const k = D.AGR_D.n.indexOf(o.agr); add(o.agr + " circuitos en tubos enterrados", k < 0 || !D.AGR_D.d[o.dist] ? 1 : D.AGR_D.d[o.dist][k]); }
+  } else if (o.tipo === "sub" || o.metodo === "ENT") {
+    add("Temperatura del terreno " + o.tamb + " °C", fTemp(tmax, o.tamb, 25));
+    const unip = o.tipo === "sub" ? o.cable === "uni" : true;
+    const i = D.RESIST.v.indexOf(o.resist);
+    add("Resistividad térmica " + fmtS(o.resist) + " K·m/W", i < 0 ? 1 : D.RESIST[unip ? "uni" : "tri"][i]);
+    const p = D.PROF.v.indexOf(o.prof);
+    add("Profundidad " + fmtS(o.prof) + " m", p < 0 ? 1 : D.PROF.f[p]);
+    if (o.agr > 1) { const k = D.AGR_ENT.n.indexOf(o.agr); add(o.agr + " ternas o cables en la zanja", k < 0 ? 1 : D.AGR_ENT.d[o.dist][k]); }
+    if (o.entubo || o.tipo !== "sub") add("Cable en el interior de tubo", 0.8);
+  } else {
+    add("Temperatura ambiente " + o.tamb + " °C", fTemp(tmax, o.tamb, 40));
+    const g = D.AGR_INT[(D.METODO[o.metodo] || {}).ag || "haz"];
+    const gi = D.AGR_N.indexOf(o.agr);
+    add("Agrupamiento de " + o.agr + " circuitos " + g.n, g.f[Math.min(gi < 0 ? 0 : gi, g.f.length - 1)]);
+  }
+  return {F, L};
+}
+
+function candidatos(o) {
+  if (o.tipo === "aer") return D.AEREA.filter(c => c.fam === o.fam && c.f === (o.fases === 3 ? 3 : 1));
+  const tab = (o.tipo === "sub" || o.metodo === "ENT") ? D.ENT[o.mat] : (o.mat === "Cu" ? D.CU : D.AL);
+  return (esUneD(o) ? D.UNE_S.slice() : Object.keys(tab).map(Number)).sort((a, b) => a - b).filter(s => s >= secMin(o)).filter(s => iTabla(o, s));
+}
+function secMin(o) {
+  if (o.tipo === "int") return o.circ ? o.circ.smin : 1.5;
+  if (o.tipo === "lga") return o.mat === "Cu" ? 10 : 16;
+  if (o.tipo === "di") return 6;
+  if (o.tipo === "ve") return o.mat === "Cu" ? 2.5 : 4;
+  if (o.tipo === "sub") return o.mat === "Cu" ? 6 : 16;
+  return 0;
+}
+
+function caida(o, s, Iz, Ib) {
+  const tmax = tmaxAisl(o.tipo === "aer" ? "XLPE" : o.aisl);
+  let T = o.critT === "20" ? 20 : o.critT === "max" ? tmax : Math.min(tmax, o.tamb + (tmax - o.tamb) * Math.pow(Ib / Iz, 2));
+  if (!isFinite(T)) T = tmax;
+  const g = gammaT(o.mat, T);
+  const R = o.L / (g * s);
+  let X = 0, xtxt = "";
+  if (o.tipo === "aer") { X = 0.0001 * o.L; xtxt = "X = 0,1 Ω/km (red trenzada)"; }
+  else if (s === 150) { X = 0.15 * R; xtxt = "X = 0,15 · R"; }
+  else if (s === 185) { X = 0.20 * R; xtxt = "X = 0,20 · R"; }
+  else if (s === 240) { X = 0.25 * R; xtxt = "X = 0,25 · R"; }
+  else if (s > 240) { X = 0.0001 * o.L; xtxt = "X = 0,1 Ω/km"; }
+  const tan = Math.tan(Math.acos(o.cos));
+  const k = o.fases === 3 ? 1 : 2;
+  const e = k * (R + X * tan) * o.P / o.U;
+  return {e, pct: e / o.U * 100, T, g, R, X, xtxt, k};
+}
+
+function fusible(Ib, Iz, cond2) {
+  for (const In of D.GG) {
+    if (In < Ib - 1e-9) continue;
+    if (In > Iz + 1e-9) return null;
+    const k = In >= 16 ? 1.6 : In > 4 ? 1.9 : 2.1;
+    if (cond2 && k * In > 1.45 * Iz + 1e-9) return null;
+    return {In, k};
+  }
+  return null;
+}
+const protegeFus = (In, Iz) => In <= Iz + 1e-9 && (In >= 16 ? 1.6 : In > 4 ? 1.9 : 2.1) * In <= 1.45 * Iz + 1e-9;
+const automatico = (Ib, Iz) => { const In = D.IA.find(x => x >= Ib - 1e-9); return In && In <= Iz + 1e-9 ? {In} : null; };
+const usaFusible = o => o.tipo !== "int" && o.tipo !== "ve" && o.tipo !== "fv";
+const kDim = o => o.tipo === "fv" ? 1.25 : 1;   // ITC-BT-40: cables para el 125 % de la intensidad del generador
+
+function fusDistribuidora(o) {
+  const kw = o.P / 1000;
+  const t = o.fases === 3 ? [[24.24,63],[34.64,100],[55.42,160],[88.60,250],[173.20,400],[346.40,630]] : [[9.20,63],[14.49,100]];
+  const r = t.find(x => kw <= x[0] + 1e-9);
+  return r ? r[1] : null;
+}
+
+function evalua(o, c) {
+  const s = o.tipo === "aer" ? c.s : c;
+  let base, nota;
+  if (o.tipo === "aer") { base = Array.isArray(c.I) ? c.I[o.tendido === "tens" ? 1 : 0] : c.I; nota = "ITC-BT-06, cable " + c.n; }
+  else { const t = iTabla(o, s); if (!t) return null; base = t.I; nota = t.nota; var prys = t.prys; }
+  const fc = factores(o);
+  const Iz = base * fc.F;
+  const cd = caida(o, s, Iz, o.Ib);
+  const okI = o.Ib * kDim(o) <= Iz + 1e-9;
+  const okE = cd.pct <= o.cdt + 1e-9;
+  const prot = usaFusible(o) ? fusible(o.Ib, Iz, o.cond2) : o.circ ? (o.circ.In <= Iz + 1e-9 ? {In: o.circ.In} : null) : automatico(o.Ib, Iz);
+  return {s, cable: o.tipo === "aer" ? c : null, base, nota, prys, fc, Iz, cd, okI, okE, prot, ok: okI && okE && !!prot};
+}
+
+function calcula(o) {
+  o = Object.assign({}, o);
+  const r3 = Math.sqrt(3);
+  if (o.tipo === "int") {   // ITC-BT-25: cobre, 230 V, caída calculada con la In del interruptor del circuito
+    o.circ = D.ESQ.int.find(x => x.id === o.esq) || D.ESQ.int[0];
+    Object.assign(o, {modoCarga: "I", I: o.circ.In, fases: 1, U: 230, cos: 1, mat: "Cu", cdt: 3});
+  }
+  if (o.modoCarga === "I") { o.Ib = o.I; o.P = (o.fases === 3 ? r3 : 1) * o.U * o.I * o.cos; }
+  else { o.Ib = o.P / ((o.fases === 3 ? r3 : 1) * o.U * o.cos); }
+  const out = {o, avisos: [], errores: []};
+  if (o.tipo === "lga" && o.fases !== 3) { out.errores.push("La línea general de alimentación es siempre trifásica: tres fases y neutro (ITC-BT-14)."); return out; }
+  if (o.tipo === "di" && o.fases === 1 && o.Ib > 63 + 1e-6) out.avisos.push("Suministro monofásico de más de 63 A (14,49 kW): fuera de los escalones de contratación; lo normal es pasarlo a trifásico.");
+  if (o.mat === "Al" && o.aisl === "PVC" && o.tipo !== "sub" && o.metodo !== "ENT" && o.tipo !== "aer")
+    { out.errores.push("La norma de 2022 no recoge aluminio con aislamiento de PVC en estos montajes. Elige XLPE/EPR o cobre."); return out; }
+  if (o.tipo === "ve" && o.mat === "Al") out.avisos.push("El aluminio no se admite en viviendas ni en aparcamientos colectivos de edificios de viviendas (ITC-BT-52).");
+  if (o.tipo === "ve" && o.fases === 1 && o.P > 9200 + 1e-6) out.avisos.push("Los circuitos de recarga monofásicos no deben superar 9.200 W (ITC-BT-52).");
+  const cand = candidatos(o);
+  if (!cand.length) { out.errores.push("No hay cables tabulados para esta combinación de material, aislamiento y montaje."); return out; }
+  const ev = cand.map(c => evalua(o, c)).filter(Boolean);
+  const pI = ev.find(e => e.okI), pE = ev.find(e => e.okE);
+  out.sInt = pI ? pI.s : null; out.sCdt = pE ? pE.s : null;
+  let el;
+  if (o.modo === "comp") {
+    el = ev.find(e => e.s === o.sComp && (o.tipo !== "aer" || true));
+    if (!el) { out.errores.push("La sección indicada no está tabulada para este montaje, o es menor que la mínima reglamentaria (" + fmtS(secMin(o)) + " mm²)."); return out; }
+  } else {
+    el = ev.find(e => e.ok);
+    if (!el) {
+      out.errores.push("Ninguna sección tabulada cumple todos los criterios. Reparte la carga en varias líneas o revisa los datos.");
+      el = ev[ev.length - 1];
+    }
+  }
+  out.el = el;
+  // criterio determinante
+  if (o.modo !== "comp" && el.ok) {
+    const prev = ev[ev.indexOf(el) - 1];
+    out.motivo = !prev ? "Sección mínima reglamentaria o tabulada" : !prev.okE ? "Caída de tensión" : !prev.okI ? "Intensidad admisible" : (usaFusible(o) ? "Coordinación con el fusible" : "Coordinación con la protección");
+    if (prev && prev.okE && prev.okI && !prev.prot)
+      {
+      const fu = usaFusible(o), tope = fu && o.cond2 ? 1.45 * prev.Iz / 1.6 : prev.Iz;
+      out.avisos.push("Con " + fmtS(prev.s) + " mm² bastaba por caída de tensión e intensidad admisible, pero ningún " + (fu ? "fusible" : "interruptor") + " normalizado cabe entre la intensidad máxima de la línea (" + fmt(o.Ib) + " A) y el máximo que protege ese cable (" + fmt(tope) + " A" + (fu && o.cond2 ? ", 0,91 · Icab" : "") + "). Se sube a " + fmtS(el.s) + " mm² para poder protegerlo.");
+    }
+  }
+  if (el.prys) out.avisos.push("La intensidad admisible de esta sección es un valor calculado por Prysmian; no figura en la norma UNE-HD 60364-5-52.");
+  // conductores
+  const s = el.s, keyS = (s === 16 ? "16" + o.mat : String(s));
+  const x = out.x = {};
+  if (o.tipo === "lga") { const r = D.LGA[keyS]; x.neutro = r ? r[0] : null; x.tuboLga = r ? r[1] : null; if (!r) out.avisos.push("La tabla 1 de la ITC-BT-14 no recoge esta sección: define neutro y tubo por cálculo."); }
+  else if (o.tipo === "sub") x.neutro = o.fases === 3 ? (D.NEU07[keyS] ?? s) : s;
+  else if (o.tipo !== "aer") x.neutro = s;
+  if (o.tipo !== "sub" && o.tipo !== "aer") x.pe = s <= 16 ? s : s <= 35 ? 16 : [25,35,50,70,95,120,150,185,240,300,400].find(v => v >= s / 2);
+  // tubo
+  if (o.circ && o.circ.nota) out.avisos.push(o.circ.nota);
+  if (o.tipo === "fv") out.avisos.push("Cálculo del tramo de corriente alterna, del inversor al punto de conexión. El lado de corriente continua (paneles a inversor) no está incluido.");
+  if (o.tipo !== "lga" && o.tipo !== "sub" && o.tipo !== "aer") {
+    const nc = o.fases === 3 ? 5 : 3, m = D.METODO[o.metodo];
+    const minDI = o.tipo === "di" ? (o.norma === "ede" ? 40 : 32) : 0;
+    if (o.metodo === "ENT") { const d = D.T9[s]; x.tubo = d ? Math.max(d, minDI) + " mm (enterrado, ITC-BT-21 tabla 9)" : null; }
+    else if (m && m.tubo) {
+      const a = D.T2[s] && D.T2[s][nc - 1], b = D.T5[s] && D.T5[s][nc - 1];
+      if (m.tubo === "emp") x.tubo = b ? Math.max(b, minDI) + " mm (empotrado, tabla 5)" : null;
+      else x.tubo = (a && b) ? Math.max(a, minDI) + " mm en superficie (tabla 2) · " + Math.max(b, minDI) + " mm empotrado (tabla 5)" : null;
+      if (!x.tubo) x.tubo = "Fuera de tabla para " + nc + " conductores: sección interior ≥ 2,5 a 3 veces la ocupada por los cables";
+    }
+    if (o.circ) { const b = D.T5[s] && D.T5[s][2]; x.tubo = Math.max(o.circ.tubo, b || 0) + " mm (mínimo de la tabla 1 de la ITC-BT-25" + (b > o.circ.tubo ? ", ampliado por la sección según ITC-BT-21" : "") + ")"; }
+    x.ncond = nc;
+  }
+  if (o.tipo === "lga" && o.metodo === "ENT") x.tuboNota = "Tubo enterrado";
+  // modo e-distribución
+  if (o.norma === "ede" && (o.tipo === "lga" || o.tipo === "di")) {
+    const e = out.ede = {};
+    if (o.tipo === "lga") {
+      if (o.Ib > 250) out.avisos.push("e-distribución limita la LGA a 250 A (hasta 400 A con acuerdo previo).");
+      if (x.neutro && x.neutro < s) out.avisos.push("e-distribución recomienda neutro de la misma sección que la fase (" + fmtS(s) + " mm²).");
+      if (el.prot) { const c = D.CGP.find(v => v >= el.prot.In); e.cgp = c ? "CGP BUC de " + c + " A" + (c === 100 ? " (esquema 7)" : " (esquema 9 o 7)") : "Más de 400 A: solución a acordar con la distribuidora"; }
+    } else {
+      if (s < 10) out.avisos.push("e-distribución recomienda 10 mm² como sección mínima de la derivación individual (fases, neutro y protección).");
+      const kw = o.P / 1000, ind = kw > 43.648 || o.Ib > 63;
+      e.medida = ind ? "Semi-indirecta obligatoria (TMF10)" : kw >= 31.05 ? "Directa o semi-indirecta, a elegir (TMF1 o TMF10)" : "Directa obligatoria (TMF1 o CPM)";
+      if (o.mat === "Al" && !ind) out.avisos.push("e-distribución solo admite aluminio en la derivación individual con medida indirecta.");
+      const fd = fusDistribuidora(o); e.fus = fd;
+      if (fd) e.fusOk = protegeFus(fd, el.Iz);
+      else out.avisos.push("Potencia fuera de los escalones del condicionado técnico de e-distribución.");
+      if ((o.esq === "unica" || o.esq === "parcial") && o.Ib > 63) out.avisos.push("En centralización el máximo por suministro es 63 A; por encima, conjunto independiente con medida semi-indirecta.");
+    }
+  }
+  return out;
+}
+
+
+</script>
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const st = {tipo: "lga", modo: "dim"};
+[...document.querySelectorAll("#modoSeg button")].forEach(b => b.onclick = () => { st.modo = b.dataset.m; sync(false); });
+const esc = s => String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+const ICO = {
+  lga:'<path d="M5 21V5l7-2 7 2v16"/><path d="M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1"/>',
+  di:'<path d="M4 20V9l5-4 5 4v11"/><path d="M14 13h6v7"/><path d="M8 20v-5h2v5"/>',
+  int:'<path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M12 20v-5m-2-2h4v-2h-4z"/>',
+  ve:'<path d="M3 15v-3l2-5h9l2 5v3"/><path d="M3 15h13v2H3z"/><circle cx="6.5" cy="18" r="1.5"/><circle cx="12.5" cy="18" r="1.5"/><path d="M19 8v4a2 2 0 0 0 2 2v3"/><path d="M18 5v3h2V5"/>',
+  sub:'<path d="M2 9h20"/><path d="M5 9V5m14 4V5"/><circle cx="8" cy="16" r="2.5"/><circle cx="16" cy="16" r="2.5"/><path d="M4 13l1 1m14-1 1 1M11 20l1 1"/>',
+  aer:'<path d="M8 22V4m-4 3h8"/><path d="M4 7c4 4 12 4 16 0"/><path d="M20 22V5m-3 2h6"/>'};
+Object.entries(D.TIPOS).forEach(([k, v]) => {
+  const b = document.createElement("button"); b.type = "button"; b.dataset.k = k; b.id = "tipo-" + k;
+  b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICO[k] + '</svg>' + {lga:"LGA", di:"Derivación individual", int:"Vivienda", ve:"Vehículo eléctrico", sub:"Subterránea", aer:"Aérea"}[k] + '<small>' + v.itc + '</small>';
+  b.onclick = () => { st.tipo = k; sync(true); };
+  $("tipoSeg").appendChild(b);
+});
+const opts = (sel, arr, keep) => { const v = sel.value; sel.innerHTML = arr.map(o => `<option value="${o[0]}">${esc(o[1])}</option>`).join(""); if (keep && arr.some(o => String(o[0]) === v)) sel.value = v; };
+opts($("dist"), [["0","En contacto"]]);
+opts($("resist"), D.RESIST.v.map(v => [v, fmtS(v)])); $("resist").value = "1";
+opts($("prof"), D.PROF.v.map(v => [v, fmtS(v)])); $("prof").value = "0.7";
+
+function sync(tipoCambia) {
+  const t = st.tipo, enl = t === "lga" || t === "di", aer = t === "aer", sub = t === "sub";
+  [...$("tipoSeg").children].forEach(b => b.setAttribute("aria-pressed", b.dataset.k === t));
+  [...$("modoSeg").children].forEach(b => b.setAttribute("aria-pressed", b.dataset.m === st.modo));
+  $("lNorma").hidden = !enl;
+  const esq = D.ESQ[t]; $("lEsq").hidden = !esq;
+  if (esq) { opts($("esq"), esq.map(e => [e.id, e.In ? e.n + " · " + e.In + " A, mín. " + fmtS(e.smin) + " mm²" : e.n + " · " + fmtS(e.cdt) + " %"]), !tipoCambia); }
+  $("lEsq").firstChild.textContent = t === "int" ? "Circuito de la vivienda" : "Esquema de instalación";
+  if (tipoCambia) {
+    $("cdt").value = esq ? esq[0].cdt : 5;
+    $("tamb").value = sub ? 25 : 40;
+    const def = {lga:[100,"3",0.9,25], di:[5.75,"1",1,20], int:[3.68,"1",1,20], ve:[7.36,"1",1,25], fv:[5,"1",1,15], sub:[120,"3",0.9,150], aer:[30,"3",0.9,80]}[t];
+    $("pot").value = def[0]; $("sist").value = def[1]; $("cos").value = def[2]; $("L").value = def[3]; $("modoCarga").value = "P";
+    $("mat").value = sub ? "Al" : "Cu";
+  }
+  // caída fijada por reglamento, salvo en redes de distribución (la ITC no da porcentaje)
+  const fija = !!esq || t === "ve" || t === "fv";
+  if (esq) { const e = esq.find(x => x.id === $("esq").value) || esq[0]; $("cdt").value = e.cdt; } else if (t === "ve") $("cdt").value = 5; else if (t === "fv") $("cdt").value = 1.5;
+  $("cdt").readOnly = fija; $("tCdt").textContent = fija ? "Caída máxima reglamentaria (%)" : "Caída máxima de proyecto (%)";
+  // sistema: la LGA es siempre trifásica
+  if (t === "lga") $("sist").value = "3"; $("sist").disabled = t === "lga";
+  // aislamiento admitido en cada línea
+  opts($("aisl"), sub ? [["XLPE","XLPE (90 °C)"],["EPR","EPR (90 °C)"],["PVC","PVC (70 °C)"]]
+    : t === "lga" ? [["XLPE","XLPE o EPR (90 °C), 0,6/1 kV"]]
+    : t === "di" ? [["XLPE","XLPE o EPR (90 °C), 0,6/1 kV"],["PVC","Termoplástico 70 °C (tipo ES07Z1-K)"]]
+    : [["XLPE","XLPE o EPR (90 °C)"],["PVC","PVC o termoplástico (70 °C)"]], true);
+  // formas de instalación admitidas en cada línea
+  const mets = (D.MET_TIPO[t] || []).map(k => k === "ENT" ? ["ENT", t === "lga" ? "Enterrada bajo tubo (UNE, tabla C.52.2 bis)" : "Enterrada bajo tubo (tablas de la ITC-BT-07)"] : [k, D.METODO[k].n]);
+  opts($("metodo"), mets, true); if (tipoCambia === true) $("metodo").value = "B1";
+  if ($("metodo").value === "ENT" && $("aisl").value === "PVC" && t === "di") $("aisl").value = "XLPE";
+  const ent = sub || (enl && $("metodo").value === "ENT");
+  $("lMet").hidden = sub || aer; $("lCable").hidden = !sub; $("lFam").hidden = !aer; $("lTend").hidden = !aer || $("fam").value === "alm";
+  $("lMat").hidden = aer || t === "int"; $("lAisl").hidden = aer;
+  const viv = t === "int"; $("tL").textContent = viv ? "Longitud al punto más alejado (m)" : "Longitud (m)";
+  $("cCarga").hidden = viv; $("nCable").textContent = viv ? "2" : "3"; $("vivInfo").hidden = !viv;
+  if (viv) { $("mat").value = "Cu"; $("sist").value = "1"; if (tipoCambia === true) $("aisl").value = "PVC";
+    const ci = D.ESQ.int.find(x => x.id === $("esq").value) || D.ESQ.int[0];
+    $("vivInfo").textContent = "Monofásico a 230 V en cobre. La caída de tensión se calcula con la intensidad del interruptor del circuito (" + ci.In + " A) y la longitud hasta el punto más alejado, como pide la ITC-BT-25."; }
+  $("lRes").hidden = $("lProf").hidden = !ent; $("lDist").hidden = !ent; $("lTubo").hidden = !sub; $("lSol").hidden = !aer;
+  $("tTamb").textContent = ent ? "Temperatura del terreno (°C)" : "Temperatura ambiente (°C)";
+  $("tAgr").textContent = ent ? "Ternas o cables en la zanja" : aer ? "Cables en haz agrupados" : "Circuitos agrupados";
+  opts($("agr"), ent ? [[1,"1"]].concat(D.AGR_ENT.n.map(n => [n, n])) : aer ? [[1,"1"],[2,"2"],[3,"3"],[4,"Más de 3"]] : (((D.METODO[$("metodo").value] || {}).ag || "haz") === "haz" ? D.AGR_N.map(n => [n, n]) : [1,2,3,4,5,6,7,8,9].map(n => [n, n === 9 ? "9 o más" : n])), !tipoCambia);
+  const uneD = t === "lga" && $("metodo").value === "ENT";
+  if (uneD) {
+    opts($("agr"), [[1,"1"]].concat(D.AGR_D.n.map(n => [n, n])), !tipoCambia);
+    $("tAgr").textContent = "Circuitos en tubos enterrados";
+    $("lDist").firstChild.textContent = "Separación entre tubos";
+    opts($("dist"), [["0","En contacto"],["0.25","0,25 m"],["0.50","0,50 m"],["1.0","1,0 m"]], true);
+    opts($("resist"), D.RESIST_D.v.map(v => [v, fmtS(v)]), true);
+    if (tipoCambia) $("resist").value = "2.5";
+    $("lProf").hidden = true;
+  } else {
+    $("lDist").firstChild.textContent = "Separación entre ternas";
+    opts($("dist"), [["0","En contacto"],["0.07","0,07 m"],["0.10","0,10 m"],["0.15","0,15 m"],["0.20","0,20 m"],["0.25","0,25 m"]], true);
+    opts($("resist"), D.RESIST.v.map(v => [v, fmtS(v)]), true);
+    if (tipoCambia) $("resist").value = "1";
+  }
+  if (tipoCambia === "met") { $("tamb").value = ent ? 25 : 40; $("agr").value = "1"; }
+  if (!ent && !aer) { const g = D.AGR_INT[(D.METODO[$("metodo").value] || {}).ag || "haz"]; $("tAgr").textContent = "Circuitos " + g.n; }
+  $("lPot").hidden = $("modoCarga").value !== "P"; $("lInt").hidden = !$("lPot").hidden;
+  $("lCond2").hidden = $("hCond2").hidden = t === "int" || t === "ve" || t === "fv";
+  $("lPot").firstChild.textContent = t === "fv" ? "Potencia nominal del inversor (kW)" : "Potencia (kW)";
+  $("lComp").hidden = st.modo !== "comp";
+  $("critHint").textContent = {real:"T = T₀ + (Tmáx − T₀) · (Imax / Icab)². Se ajusta a lo cargado que va el cable: ni subestima la caída ni sobredimensiona.",
+    max:"Supone el cable a su temperatura límite. Es el criterio más conservador y puede dar una sección mayor de la necesaria.",
+    "20":"Supone el cable frío. Es el criterio más favorable, pero la caída real en carga será mayor que la calculada."}[$("critT").value];
+  run();
+}
+
+function lee() {
+  const t = st.tipo, n = id => parseFloat($(id).value);
+  const fases = +$("sist").value;
+  return {tipo: t, norma: $("norma").value, esq: $("esq").value, modoCarga: $("modoCarga").value, P: n("pot") * 1000, I: n("int"),
+    fases, U: fases === 3 ? 400 : 230, cos: n("cos"), L: n("L"), cdt: n("cdt"),
+    mat: t === "aer" ? ($("fam").value === "cu" ? "Cu" : "Al") : $("mat").value, aisl: t === "aer" ? "XLPE" : $("aisl").value,
+    metodo: $("metodo").value, cable: $("cable").value, fam: $("fam").value, tendido: $("tendido").value,
+    tamb: n("tamb"), agr: +$("agr").value, resist: +$("resist").value, prof: +$("prof").value, dist: $("dist").value,
+    entubo: $("entubo").checked, sol: $("sol").checked, critT: $("critT").value, cond2: $("cond2").checked,
+    modo: st.modo, sComp: +$("sComp").value};
+}
+
+let ultimo = "";
+function run() {
+  const o = lee();
+  // secciones para el modo comprobación
+  const cs = candidatos(o).map(c => typeof c === "number" ? c : c.s);
+  opts($("sComp"), [...new Set(cs)].map(s => [s, fmtS(s)]), true);
+  o.sComp = +$("sComp").value;
+  const val = [[o.modoCarga === "P" ? o.P : o.I, "la carga"], [o.L, "la longitud"], [o.cdt, "la caída máxima"]].find(v => !(v[0] > 0));
+  if (val || !(o.cos > 0 && o.cos <= 1) || !isFinite(o.tamb)) {
+    $("out").innerHTML = `<ul class="avisos"><li class="err">${val ? "Introduce un valor mayor que cero en " + val[1] + "." : !isFinite(o.tamb) ? "Introduce la temperatura." : "El cos φ debe estar entre 0,1 y 1."}</li></ul>`;
+    ultimo = ""; $("barraS").textContent = "–"; $("barraE").textContent = "Faltan datos"; $("barraE").className = "bad"; return;
+  }
+  pinta(calcula(o));
+}
+
+function pinta(r) {
+  const o = r.o, e = r.el, fus = usaFusible(o);
+  const errs = r.errores.map(x => `<li class="err">${esc(x)}</li>`).join("");
+  if (!e) { $("out").innerHTML = `<ul class="avisos">${errs}</ul>`; ultimo = r.errores.join("\n"); $("barraS").textContent = "–"; $("barraE").textContent = "Revisa los datos"; $("barraE").className = "bad"; return; }
+  const esq = (D.ESQ[o.tipo] || []).find(x => x.id === o.esq);
+  const ok = e.ok && !r.errores.length;
+  const pill = (c, t) => `<span class="pill ${c ? "ok" : "bad"}">${t || (c ? "Cumple" : "No cumple")}</span>`;
+  const row = (dt, dd, p) => `<div class="row"><dt>${dt}</dt><dd>${dd}</dd><p>${p}</p></div>`;
+  const tri = o.fases === 3;
+  // designación del cable
+  let desig, dots = "";
+  const dot = (c, s, l) => `<i><b style="background:${c};width:${Math.round(12 + Math.sqrt(s) * 2.2)}px;height:${Math.round(12 + Math.sqrt(s) * 2.2)}px"></b>${l}</i>`;
+  const x = r.x;
+  if (o.tipo === "aer") desig = e.cable.n;
+  else {
+    desig = (tri ? "3 × " : "1 × ") + fmtS(e.s) + (x.neutro ? " + N " + fmtS(x.neutro) : "") + (x.pe ? " + T " + fmtS(x.pe) : "") + " mm² " + o.mat;
+    dots = (tri ? dot("var(--fase)", e.s, "L1") + dot("var(--fase2)", e.s, "L2") + dot("var(--fase3)", e.s, "L3") : dot("var(--fase)", e.s, "L")) +
+      (x.neutro ? dot("var(--neutro)", x.neutro, "N") : "") + (x.pe ? dot("linear-gradient(90deg,var(--pe1) 50%,var(--pe2) 50%)", x.pe, "T") : "");
+  }
+  const lugar = o.tipo === "lga" ? "Fusible de la CGP" : o.tipo === "di" ? (esq ? esq.fus : "Fusible") : o.tipo === "sub" || o.tipo === "aer" ? "Fusible en cabecera de la línea" : "Interruptor automático del circuito";
+  const ICOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>';
+  const ICBAD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v6m0 3.5v.5"/></svg>';
+  const porque = [];
+  if (!e.okI) porque.push("la intensidad máxima (" + fmt(o.Ib * kDim(o)) + " A) supera la que admite el cable (" + fmt(e.Iz) + " A)");
+  if (!e.okE) porque.push("la caída de tensión (" + fmt(e.cd.pct, 2) + " %) supera el límite (" + fmtS(o.cdt) + " %)");
+  if (e.okI && !e.prot) porque.push("no hay " + (fus ? "fusible" : "interruptor") + " normalizado que proteja este cable");
+  const pq = porque.length ? porque.join("; ") : "";
+  let h = `<div class="estado ${ok ? "ok" : "bad"}">${ok ? ICOK : ICBAD}<div>${ok ? "Cumple" : "No cumple"}${!ok && pq ? "<small>Motivo: " + esc(pq) + ".</small>" : ""}</div></div>`;
+  // sección del cable a escala: conductor (cobre o aluminio) y aislamiento con su color
+  let svg = "";
+  if (o.tipo !== "aer") {
+    const cs = (tri ? [["L1","var(--fase)",e.s],["L2","var(--fase2)",e.s],["L3","var(--fase3)",e.s]] : [["L","var(--fase)",e.s]])
+      .concat(x.neutro ? [["N","var(--neutro)",x.neutro]] : []).concat(x.pe ? [["T","pe",x.pe]] : []);
+    const R = s => 5 + Math.sqrt(s) * 1.55, met = o.mat === "Cu" ? "var(--cu)" : "var(--al)";
+    const rmax = Math.max(...cs.map(c => R(c[2]))) + 4; let cx = 6, g = "";
+    cs.forEach((c, i) => { const r = R(c[2]), ro = r + 4, hw = Math.max(ro, 20); cx += hw;
+      g += c[1] === "pe" ? `<circle cx="${cx}" cy="${rmax + 4}" r="${ro}" fill="var(--pe1)"/><path d="M${cx} ${rmax + 4 - ro}a${ro} ${ro} 0 0 1 0 ${2 * ro}z" fill="var(--pe2)"/>` : `<circle cx="${cx}" cy="${rmax + 4}" r="${ro}" fill="${c[1]}"/>`;
+      g += `<circle cx="${cx}" cy="${rmax + 4}" r="${r}" fill="${met}"/><text x="${cx}" y="${2 * rmax + 22}" text-anchor="middle">${c[0]} ${fmtS(c[2])}</text>`;
+      cx += hw + 8; });
+    const W = cx - 2, H = 2 * rmax + 30;
+    svg = `<svg class="cable" viewBox="0 0 ${W.toFixed(0)} ${H.toFixed(0)}" width="${W.toFixed(0)}" role="img" aria-label="Sección del cable: ${esc(desig)}">${g}</svg>`;
+  }
+  h += `<div class="hero"><div class="big">${o.tipo === "aer" ? esc(e.cable.n) : fmtS(e.s) + "<span>mm²</span>"}</div>${svg}<div class="sub">${o.modo === "comp" ? "Sección comprobada" : "Sección adoptada"} · ${esc(desig)}</div></div>`;
+  // barras de margen
+  const barra = (t, v, pct) => `<div class="barra ${pct > 100 ? "bad" : pct > 85 ? "warn" : ""}"><div class="cab"><span>${t}</span><span>${v}</span></div><div class="pista"><i style="width:${Math.max(2, Math.min(100, pct)).toFixed(0)}%"></i></div></div>`;
+  const tope = e.prot ? (fus && o.cond2 ? 1.45 * e.Iz / e.prot.k : e.Iz) : 0;
+  h += `<div class="barras">` + barra("Caída de tensión", fmt(e.cd.pct, 2) + " % de " + fmtS(o.cdt) + " %", e.cd.pct / o.cdt * 100)
+    + barra("Carga del cable", fmt(o.Ib, 0) + " A de " + fmt(e.Iz, 0) + " A admitidos", o.Ib * kDim(o) / e.Iz * 100)
+    + (e.prot ? barra(fus ? "Fusible" : "Interruptor", e.prot.In + " A, máximo " + fmt(tope, 0) + " A", e.prot.In / tope * 100) : "") + `</div><dl>`;
+  h += row("Intensidad máxima de la línea (Imax)", fmt(o.Ib) + " A", o.circ ? "En vivienda es la intensidad nominal del interruptor automático del circuito, no la de los receptores (ITC-BT-25)." : o.tipo === "fv" ? "Intensidad nominal de salida del inversor. Con ella se calcula la caída de tensión." : "Intensidad máxima que va a pasar por la línea.");
+  if (o.tipo === "fv") h += row("Intensidad de dimensionado (125 %)", fmt(o.Ib * 1.25) + " A", "Los cables de un generador se dimensionan para el 125 % de su intensidad máxima (ITC-BT-40). Debe ser menor o igual que Icab.");
+  h += row("Intensidad admitida por el cable (Icab)" + pill(e.okI), fmt(e.Iz) + " A", "Intensidad total que admite el cable en estas condiciones de instalación. Tabla: " + fmt(e.base, 0) + " A" + (e.fc.L.length ? " × " + fmt(e.fc.F, 3) + " de corrección" : "") + ". " + esc(e.nota) + ".");
+  h += row("Caída de tensión" + pill(e.okE), fmt(e.cd.e, 2) + " V · " + fmt(e.cd.pct, 2) + " %", "Límite: " + fmtS(o.cdt) + " % (" + fmt(o.cdt * o.U / 100, 2) + " V). Conductor a " + fmt(e.cd.T, 0) + " °C, conductividad " + fmt(e.cd.g, 1) + " m/Ω·mm².");
+  if (o.modo !== "comp") h += row("Sección mínima por cada criterio", (r.sCdt ? fmtS(r.sCdt) : "–") + " · " + (r.sInt ? fmtS(r.sInt) : "–") + " mm²", "Por caída de tensión y por intensidad admisible, por separado. Se adopta la que cumple ambos y permite coordinar la protección.");
+  if (fus) h += row(lugar + " (Iprot)" + pill(!!e.prot), e.prot ? e.prot.In + " A gG" : "Sin calibre", e.prot ? "Intensidad nominal del fusible (Iprot). Cumple Imax ≤ Iprot ≤ Icab: " + fmt(o.Ib) + " ≤ " + e.prot.In + " ≤ " + fmt(e.Iz) + (o.cond2 ? " y " + fmtS(e.prot.k) + " · Iprot ≤ 1,45 · Icab: " + fmt(e.prot.k * e.prot.In, 0) + " ≤ " + fmt(1.45 * e.Iz, 0) + "." : ". Segunda condición de sobrecarga no aplicada.") : "No existe calibre normalizado entre Imax e Icab que cumpla las condiciones de sobrecarga con esta sección.");
+  else h += row(lugar + " (Iprot)" + pill(!!e.prot), e.prot ? e.prot.In + " A" : "Sin calibre", e.prot ? "Intensidad nominal (Iprot). Cumple Imax ≤ Iprot ≤ Icab: " + fmt(o.Ib) + " ≤ " + e.prot.In + " ≤ " + fmt(e.Iz) + ". En interruptores automáticos I2 = 1,45 · Iprot, así que la segunda condición se cumple sola." : "No hay calibre normalizado entre Imax e Icab con esta sección.");
+  if (x.neutro && o.tipo !== "aer") h += row("Conductor neutro", fmtS(x.neutro) + " mm²", o.tipo === "lga" ? "Tabla 1 de la ITC-BT-14." : o.tipo === "sub" ? (tri ? "Tabla 1 de la ITC-BT-07." : "Igual a la fase (dos conductores).") : "Igual a la fase.");
+  if (x.pe) h += row("Conductor de protección", fmtS(x.pe) + " mm²", "Tabla 2 de la ITC-BT-19, mismo material que las fases.");
+  if (x.tuboLga) h += row("Tubo", x.tuboLga + " mm", "Diámetro exterior, tabla 1 de la ITC-BT-14.");
+  if (x.tubo) h += row("Tubo", esc(x.tubo.split(" (")[0].split(" en superficie")[0]) + (/superficie/.test(x.tubo) ? " / " + esc(x.tubo.split("· ")[1].split(" mm")[0]) + " mm" : ""), "Diámetro exterior para " + x.ncond + " conductores (ITC-BT-21): " + esc(x.tubo) + "." + (o.tipo === "di" ? " Mínimo de " + (o.norma === "ede" ? "40 mm (e-distribución)" : "32 mm") + "; debe permitir ampliar la sección un 100 %. Añade el hilo de mando de 1,5 mm²." : ""));
+  if (r.ede) {
+    if (r.ede.cgp) h += row("Caja general de protección", esc(r.ede.cgp.replace("CGP BUC de ", "").split(" (")[0]), "e-distribución: " + esc(r.ede.cgp) + ".");
+    if (r.ede.medida) h += row("Equipo de medida", esc(r.ede.medida.split(" (")[0].split(",")[0]), "e-distribución: " + esc(r.ede.medida) + ". Límites para red de 230/400 V: 31,05 y 43,648 kW.");
+    if (r.ede.fus) h += row("Fusible que asigna e-distribución" + `<span class="pill ${r.ede.fusOk ? "ok" : "warn"}">${r.ede.fusOk ? "Protege el cable" : "No protege el cable"}</span>`, r.ede.fus + " A", "Calibre del condicionado técnico para " + fmt(o.P / 1000, 2) + " kW. " + (r.ede.fusOk ? "El cable adoptado queda protegido contra sobrecargas por este fusible." : "Con este calibre el cable no queda protegido contra sobrecargas por el fusible (haría falta Icab ≥ " + fmt(1.6 * r.ede.fus / 1.45, 0) + " A); la protección de sobrecarga recae en el interruptor general aguas abajo. Orientativo: la distribuidora decide."));
+  }
+  h += "</dl>";
+  const av = errs + r.avisos.map(a => `<li>${esc(a)}</li>`).join("");
+  if (av) h += `<ul class="avisos">${av}</ul>`;
+  // fórmulas
+  const c = e.cd, F = [];
+  F.push(o.modoCarga === "I" ? `Imax = ${fmt(o.Ib)} A (dato)   P = ${tri ? "√3 · " : ""}${o.U} · ${fmt(o.Ib)} · ${fmtS(o.cos)} = ${fmt(o.P, 0)} W`
+    : `Imax = P / (${tri ? "√3 · " : ""}U · cos φ) = ${fmt(o.P, 0)} / (${tri ? "1,732 · " : ""}${o.U} · ${fmtS(o.cos)}) = ${fmt(o.Ib)} A`);
+  if (o.tipo === "fv") F.push(`1,25 · Imax = ${fmt(o.Ib * 1.25)} A  (debe ser ≤ Icab)`);
+  F.push(`Icab = ${fmt(e.base, 0)}${e.fc.L.map(f => " · " + fmt(f.v, 2)).join("")} = ${fmt(e.Iz)} A`);
+  e.fc.L.forEach(f => F.push(`     ${fmt(f.v, 2)}  ${f.n}`));
+  if (o.critT === "real") F.push(`T = T₀ + (Tmáx − T₀) · (Imax / Icab)² = ${fmt(o.tamb, 0)} + (${tmaxAisl(o.aisl)} − ${fmt(o.tamb, 0)}) · (${fmt(o.Ib)} / ${fmt(e.Iz)})² = ${fmt(c.T, 0)} °C`);
+  F.push(`γ (${o.mat}, ${fmt(c.T, 0)} °C) = ${fmt(c.g, 1)} m/Ω·mm²`);
+  F.push(c.X ? `R = L / (γ · S) = ${fmtS(o.L)} / (${fmt(c.g, 1)} · ${fmtS(e.s)}) = ${fmt(c.R, 4)} Ω   ${c.xtxt}\ne = ${c.k === 2 ? "2 · " : ""}(R + X · tan φ) · P / U = ${fmt(c.e, 2)} V = ${fmt(c.pct, 2)} %`
+    : `e = ${c.k === 2 ? "2 · " : ""}P · L / (γ · S · U) = ${c.k === 2 ? "2 · " : ""}${fmt(o.P, 0)} · ${fmtS(o.L)} / (${fmt(c.g, 1)} · ${fmtS(e.s)} · ${o.U}) = ${fmt(c.e, 2)} V = ${fmt(c.pct, 2)} %`);
+  h += `<details><summary>Fórmulas con los valores</summary><pre class="form">${esc(F.join("\n"))}</pre></details>`;
+  $("out").innerHTML = h;
+  $("barraS").textContent = o.tipo === "aer" ? e.cable.n : fmtS(e.s) + " mm²"; $("barraE").textContent = ok ? "Cumple" : "No cumple"; $("barraE").className = ok ? "ok" : "bad";
+  // resumen en texto
+  const T = [];
+  T.push("CÁLCULO DE LÍNEA · " + D.TIPOS[o.tipo].n + " (" + D.TIPOS[o.tipo].itc + ")" + (o.norma === "ede" && (o.tipo === "lga" || o.tipo === "di") ? " · criterio e-distribución" : ""));
+  if (esq) T.push("Esquema: " + esq.n);
+  T.push(`Carga: ${fmt(o.P / 1000, 2)} kW, ${tri ? "trifásica 400 V" : "monofásica 230 V"}, cos φ ${fmtS(o.cos)} · Longitud: ${fmtS(o.L)} m`);
+  T.push(o.tipo === "aer" ? "Cable: " + e.cable.n + ", " + (o.fam === "alm" ? "tensado con neutro fiador" : o.tendido === "tens" ? "tensado con fiador de acero" : "posado sobre fachada")
+    : `Cable: ${o.mat === "Cu" ? "cobre" : "aluminio"}, ${o.aisl}, ${o.tipo === "sub" ? (o.cable === "uni" ? "terna de unipolares enterrada" : "cable tripolar enterrado") : o.metodo === "ENT" ? "enterrado bajo tubo" : D.METODO[o.metodo].n}`);
+  T.push("", (o.modo === "comp" ? "Sección comprobada: " : "Sección adoptada: ") + desig + (r.motivo ? " (" + r.motivo.toLowerCase() + ")" : ""));
+  T.push(`Intensidad máxima de la línea (Imax): ${fmt(o.Ib)} A`, `Intensidad admitida por el cable (Icab): ${fmt(e.Iz)} A`, `Caída de tensión: ${fmt(c.e, 2)} V (${fmt(c.pct, 2)} %), límite ${fmtS(o.cdt)} %`);
+  T.push(lugar + " (Iprot): " + (e.prot ? e.prot.In + " A" + (fus ? " gG" : "") : "sin calibre que cumpla"));
+  if (x.tuboLga) T.push("Tubo: " + x.tuboLga + " mm"); if (x.tubo) T.push("Tubo: " + x.tubo);
+  if (r.ede) { if (r.ede.cgp) T.push(r.ede.cgp); if (r.ede.medida) T.push("Medida: " + r.ede.medida); if (r.ede.fus) T.push("Fusible e-distribución: " + r.ede.fus + " A (" + (r.ede.fusOk ? "protege el cable" : "no protege el cable por sí solo") + ")"); }
+  T.push("Resultado: " + (ok ? "CUMPLE" : "NO CUMPLE"), "", ...F);
+  if (r.errores.length || r.avisos.length) T.push("", "Avisos:", ...r.errores.concat(r.avisos).map(a => "- " + a));
+  T.push("", "Cálculo orientativo según REBT. La empresa distribuidora determina la solución final.");
+  ultimo = T.join("\n");
+}
+
+document.querySelectorAll("input,select").forEach(el => el.addEventListener(el.tagName === "SELECT" || el.type === "checkbox" ? "change" : "input", ev => {
+  sync(ev.target.id === "metodo" ? "met" : false);
+}));
+$("copiar").onclick = () => {
+  const fin = ok => { $("copiado").textContent = ok ? "Copiado" : "Selecciona el texto y cópialo"; if (!ok) { $("resumen").hidden = false; $("resumen").value = ultimo; $("resumen").select(); } setTimeout(() => $("copiado").textContent = "", 4000); };
+  if (!ultimo) return;
+  try { navigator.clipboard.writeText(ultimo).then(() => fin(true), () => fin(false)); } catch (e) { fin(false); }
+};
+sync(true);
+})();
+</script>
+
+</body>
+</html>
