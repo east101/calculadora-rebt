@@ -32,8 +32,3 @@ Calculadora de sección de cable, caída de tensión y protección para instalac
 
 Cálculo orientativo. No sustituye al proyecto ni a la memoria técnica, y la empresa distribuidora determina la solución final de la instalación de enlace.
 
-## Publicar en GitHub Pages
-
-1. Sube `index.html` a la raíz del repositorio.
-2. En Settings → Pages, elige la rama `main` y guarda.
-3. La página queda en `https://<usuario>.github.io/<repositorio>/`.
