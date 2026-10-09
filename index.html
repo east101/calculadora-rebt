@@ -94,6 +94,25 @@ dl{margin:0;display:flex;flex-direction:column}
 .avisos{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
 .avisos li{background:var(--warn-bg);color:var(--warn);padding:10px 12px;border-radius:10px;font-size:14px}
 .avisos li.err{background:var(--bad-bg);color:var(--bad)}
+.destacado{border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--ink);padding:12px 14px;border-radius:12px;font-size:14px;margin:0}
+.destacado b{display:block;margin-block-end:2px}
+.cadena{display:flex;flex-direction:column;gap:8px}
+.cadena h3{font:700 11.5px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:0}
+.cadena ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.cadena li{background:var(--panel);border-radius:8px;padding:8px 10px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px}
+.cadena li b{font-weight:700} .cadena li em{font:700 13px var(--f-num);font-style:normal;text-align:right}
+.cadena li span{grid-column:1/-1;color:var(--mute);font-size:12.5px}
+.cadena .pie{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.cadena .pie div{display:flex;gap:6px}
+.cadena button{border:1.5px solid var(--line);background:var(--field);color:var(--ink);border-radius:8px;font:700 13px var(--f-ui);padding:5px 9px;cursor:pointer}
+.mots{display:flex;flex-direction:column;gap:10px}
+#motsList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+.fila{display:flex;gap:6px} .fila input{flex:1}
+.fila button{flex:none;width:42px;border:1.5px solid var(--line);background:var(--field);color:var(--mute);border-radius:10px;font:700 15px var(--f-ui);cursor:pointer}
+.mots .btn{align-self:flex-start;font-size:14px;padding:9px 14px}
+.mots .nota b{font-family:var(--f-num);font-size:13px}
+@media (max-width:420px){#motsList{grid-template-columns:minmax(0,1fr)}}
+.btn.sec{background:var(--field);color:var(--ink);border:1.5px solid var(--line)}
 .form{font:500 12.5px/1.6 var(--f-num);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;overflow-x:auto;white-space:pre;margin:10px 0 0}
 #out{display:flex;flex-direction:column;gap:14px}
 .acc{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
@@ -111,7 +130,13 @@ footer{color:var(--mute);font-size:12.5px;max-width:75ch}
   .barraFija .ok{color:var(--ok)} .barraFija .bad{color:var(--bad)}
   .barraFija a{font:700 14px var(--f-ui);padding:10px 14px;border-radius:10px;background:var(--accent);color:var(--accent-ink);text-decoration:none;flex:none}
 }
-@media (max-width:420px){.tipos{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.grupos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px}
+.grupo{display:flex;flex-direction:column;gap:6px;min-width:0}
+.grupo.g3{grid-column:1/-1}
+.grupo h3{font:700 11.5px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:0}
+.grupo .tipos{grid-template-columns:repeat(2,minmax(0,1fr));flex:1}
+.grupo.g3 .tipos{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:520px){.grupos{grid-template-columns:minmax(0,1fr)} .tipos button{font-size:13px;padding-inline:4px}}
 </style>
 </head>
 <body style="margin:0">
@@ -120,7 +145,7 @@ footer{color:var(--mute);font-size:12.5px;max-width:75ch}
 <div class="wrap">
 <header>
   <div class="logo" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 5 13.5h6L10 22l9-12h-6.5L13 2Z"/></svg></div>
-  <div><h1>Calculadora REBT <span class="ver">Beta 1</span></h1><p>Sección de cable, caída de tensión y protección en baja tensión</p></div>
+  <div><h1>Calculadora REBT <span class="ver">Beta 2</span></h1><p>Sección de cable, caída de tensión y protección en baja tensión</p></div>
 </header>
 <div class="cols">
 <div class="pasos">
@@ -131,24 +156,43 @@ footer{color:var(--mute);font-size:12.5px;max-width:75ch}
     <button type="button" id="modo-comp" data-m="comp">Comprobar una sección</button>
   </div>
   <label id="lComp" hidden>Sección a comprobar (mm²)<select id="sComp"></select></label>
-  <div class="tipos" id="tipoSeg" role="group" aria-label="Tipo de línea"></div>
+  <div class="grupos" id="tipoSeg" role="group" aria-label="Tipo de línea"></div>
   <div class="grid">
     <label class="full" id="lNorma">Criterio
       <select id="norma"><option value="rebt">REBT (general)</option><option value="ede">e-distribución (NRZ103)</option></select></label>
     <label class="full" id="lEsq">Esquema de instalación<select id="esq"></select></label>
   </div>
+  <div class="grid" id="gLoc" hidden>
+    <label>Uso del circuito<select id="uso"><option value="otr">Otros usos (fuerza, tomas)</option><option value="alu">Alumbrado</option></select></label>
+    <label>Alimentación<select id="alim"><option value="red">Red de distribución</option><option value="trafo">Transformador propio</option></select></label>
+    <label class="full">Local<select id="riesgo"><option value="0">Normal</option><option value="1">Con riesgo de incendio o explosión (ITC-BT-29)</option></select></label>
+    <p class="hint full" id="hRiesgo" hidden>Solo para emplazamientos clasificados de la ITC-BT-29 (clase I, gases o vapores inflamables; clase II, polvo combustible). La intensidad admitida por el cable se reduce un 15 %.</p>
+  </div>
+  <div class="nota cadena" id="cadena" hidden></div>
   <p class="nota" id="vivInfo" hidden></p>
 </section>
 
 <section class="card" id="cCarga" aria-label="Carga">
   <div class="paso"><b>2</b><h2 id="hCarga">La carga</h2></div>
   <div class="grid" id="gCarga">
+    <label class="full" id="lRec" hidden>Receptor<select id="rec"><option value="gen">Uso general</option><option value="mot">Un motor</option><option value="mots">Línea a varios motores (cuadro de máquinas)</option><option value="asc">Ascensor, grúa o aparato de elevación</option><option value="desc">Lámparas de descarga</option></select></label>
+    <p class="hint full" id="hRec" hidden></p>
     <label>Dato de partida<select id="modoCarga"><option value="P">Potencia</option><option value="I">Intensidad</option></select></label>
     <label id="lPot">Potencia (kW)<input id="pot" type="number" inputmode="decimal" min="0" step="0.01" value="100"></label>
     <label id="lInt" hidden>Intensidad (A)<input id="int" type="number" inputmode="decimal" min="0" step="0.1" value="63"></label>
+    <div class="full mots" id="bMots" hidden>
+      <div id="motsList"></div>
+      <button class="btn sec" id="motAdd" type="button">+ Añadir motor</button>
+      <label>Otros receptores que no son motores: alumbrado, tomas… (A)<input id="otros" type="number" inputmode="decimal" min="0" step="0.1" value="0"></label>
+      <p class="nota" id="motsCuenta" aria-live="polite"></p>
+    </div>
+    <label id="lArr" hidden>Intensidad de arranque (A)<input id="iarr" type="number" inputmode="decimal" min="0" step="0.1" value=""></label>
+    <label id="lCosArr" hidden>cos φ en el arranque<input id="cosarr" type="number" inputmode="decimal" min="0.1" max="1" step="0.01" value="" placeholder="el de régimen"></label>
+    <p class="hint full" id="hCosArr" hidden>El cos φ de régimen es el del motor a plena carga, el que figura en su placa. En el arranque es bastante menor, pero no suele venir en la placa: si dejas este campo vacío se usa el de régimen, que en secciones de hasta 120 mm² da una caída mayor que la real y queda del lado seguro. Si conoces el de arranque (catálogo del fabricante), ponlo.</p>
+    <label id="lKdesc" hidden>Coeficiente (VA por W)<input id="kdesc" type="number" inputmode="decimal" min="1" step="0.05" value="1.8"></label>
     <label>Sistema<select id="sist"><option value="3">Trifásico 400 V</option><option value="1">Monofásico 230 V</option></select></label>
-    <label>cos φ<input id="cos" type="number" inputmode="decimal" min="0.1" max="1" step="0.01" value="0.9"></label>
-    <p class="hint full">El reglamento no fija el cos φ: es un dato de la carga. Se propone 0,9 con cargas mezcladas (el de los ejemplos de la guía técnica) y 1 en circuitos resistivos o de recarga.</p>
+    <label id="lCos">cos φ<input id="cos" type="number" inputmode="decimal" min="0.1" max="1" step="0.01" value="0.9"></label>
+    <p class="hint full" id="hCos">El reglamento no fija el cos φ: es un dato de la carga. Se propone 0,9 con cargas mezcladas (el de los ejemplos de la guía técnica) y 1 en circuitos resistivos o de recarga.</p>
   </div>
 </section>
 
@@ -157,6 +201,9 @@ footer{color:var(--mute);font-size:12.5px;max-width:75ch}
   <div class="grid">
     <label><span id="tL">Longitud (m)</span><input id="L" type="number" inputmode="decimal" min="0" step="0.5" value="25"></label>
     <label><span id="tCdt">Caída máxima reglamentaria (%)</span><input id="cdt" type="number" inputmode="decimal" min="0.1" step="0.1" value="0.5"></label>
+    <label id="lSobra" hidden>Sobrante de la derivación individual (%)<input id="sobra" type="number" inputmode="decimal" min="0" step="0.05" value="0"></label>
+    <label id="lGast" hidden>Caída ya gastada aguas arriba (%)<input id="gast" type="number" inputmode="decimal" min="0" step="0.05" value="" placeholder="0"></label>
+    <p class="hint full" id="hCdtLoc" hidden></p>
     <label id="lMat">Material<select id="mat"><option value="Cu">Cobre</option><option value="Al">Aluminio</option></select></label>
     <label id="lAisl">Aislamiento<select id="aisl"></select></label>
     <label class="full" id="lMet">Forma de instalación<select id="metodo"></select></label>
@@ -193,11 +240,11 @@ footer{color:var(--mute);font-size:12.5px;max-width:75ch}
 
 <section class="card res" id="res" aria-label="Resultado" aria-live="polite">
   <div id="out"></div>
-  <div class="acc"><button class="btn" id="copiar" type="button">Copiar resumen</button><span id="copiado" role="status"></span></div>
+  <div class="acc"><button class="btn sec" id="seguir" type="button" hidden>Continuar desde esta línea</button><button class="btn" id="copiar" type="button">Copiar resumen</button><button class="btn sec" id="reset" type="button">Restablecer datos</button><span id="copiado" role="status"></span></div>
   <textarea id="resumen" readonly hidden aria-label="Resumen del cálculo"></textarea>
 </section>
 </div>
-<footer>Versión beta 1 · 8-10-2026. Cálculo orientativo. Base: REBT (texto consolidado a 3-9-2025), guía técnica (anexo 2 y BT-22), UNE-HD 60364-5-52:2022 según recopilación de Prysmian, y guía NRZ103 ed. 7 de e-distribución. La empresa distribuidora determina la solución final de la instalación de enlace; la nomenclatura CPM/TMF es de e-distribución, consulta el equivalente en tu distribuidora.</footer>
+<footer>Versión beta 2 · 9-10-2026. Cálculo orientativo. Base: REBT (texto consolidado a 3-9-2025), guía técnica (anexo 2 y BT-22), UNE-HD 60364-5-52:2022 según recopilación de Prysmian, y guía NRZ103 ed. 7 de e-distribución. La empresa distribuidora determina la solución final de la instalación de enlace; la nomenclatura CPM/TMF es de e-distribución, consulta el equivalente en tu distribuidora.</footer>
 </div>
 <div class="barraFija" id="barra"><div><b id="barraS">–</b><span id="barraE"></span></div><a href="#res">Ver resultado</a></div>
 
@@ -294,7 +341,7 @@ const D = (() => {
     haz:{n:"agrupados en haz o en el mismo tubo o canal", f:[1,0.80,0.70,0.65,0.60,0.57,0.54,0.52,0.50,0.45,0.41,0.38]},
     capa:{n:"en una capa sobre pared o bandeja no perforada", f:[1,0.85,0.79,0.75,0.73,0.72,0.72,0.71,0.70]},
     band:{n:"en una capa sobre bandeja perforada", f:[1,0.88,0.82,0.77,0.75,0.73,0.73,0.72,0.72]}};
-  const MET_TIPO = {lga:["A1","B1","ENT"], di:["A1","A2","B1","B2","ENT"], int:["A1","A2","B1","B2","C","E","F"], ve:["A1","A2","B1","B2","C","E","F"], fv:["A1","A2","B1","B2","C","E","F"]};
+  const MET_TIPO = {lga:["A1","B1","ENT"], di:["A1","A2","B1","B2","ENT"], int:["A1","A2","B1","B2","C","E","F"], ve:["A1","A2","B1","B2","C","E","F"], loc:["A1","A2","B1","B2","C","E","F"], fv:["A1","A2","B1","B2","C","E","F"]};
   // ITC-BT-14 tabla 1
   const LGA = {"10":[10,75],"16Cu":[10,75],"16Al":[16,75],"25":[16,110],"35":[16,110],"50":[25,125],"70":[35,140],"95":[50,140],"120":[70,160],"150":[70,160],"185":[95,180],"240":[120,200]};
   // ITC-BT-07 tabla 1
@@ -311,6 +358,7 @@ const D = (() => {
     di:{n:"Derivación individual", itc:"ITC-BT-15"},
     int:{n:"Circuito interior de vivienda", itc:"ITC-BT-25"},
     ve:{n:"Recarga de vehículo eléctrico", itc:"ITC-BT-52"},
+    loc:{n:"Circuito interior (no vivienda)", itc:"ITC-BT-19"},
     sub:{n:"Red subterránea", itc:"ITC-BT-07"},
     aer:{n:"Red aérea trenzada", itc:"ITC-BT-06"}
   };
@@ -409,6 +457,7 @@ function factores(o) {
     const gi = D.AGR_N.indexOf(o.agr);
     add("Agrupamiento de " + o.agr + " circuitos " + g.n, g.f[Math.min(gi < 0 ? 0 : gi, g.f.length - 1)]);
   }
+  if (o.tipo === "loc" && o.riesgo) add("Local con riesgo de incendio o explosión (ITC-BT-29, ap. 9.1)", 0.85);
   return {F, L};
 }
 
@@ -455,9 +504,12 @@ function fusible(Ib, Iz, cond2) {
   return null;
 }
 const protegeFus = (In, Iz) => In <= Iz + 1e-9 && (In >= 16 ? 1.6 : In > 4 ? 1.9 : 2.1) * In <= 1.45 * Iz + 1e-9;
-const automatico = (Ib, Iz) => { const In = D.IA.find(x => x >= Ib - 1e-9); return In && In <= Iz + 1e-9 ? {In} : null; };
-const usaFusible = o => o.tipo !== "int" && o.tipo !== "ve" && o.tipo !== "fv";
-const kDim = o => o.tipo === "fv" ? 1.25 : 1;   // ITC-BT-40: cables para el 125 % de la intensidad del generador
+// Hasta 125 A, calibre fijo normalizado. Por encima, interruptor de caja moldeada con térmico regulable: basta Imax ≤ Icab
+const automatico = (Ib, Iz) => { const In = D.IA.find(x => x >= Ib - 1e-9); if (!In) return null;
+  if (In > 125) return Ib <= Iz + 1e-9 ? {In, reg: true, min: Ib, max: Math.min(Iz, In)} : null;
+  return In <= Iz + 1e-9 ? {In} : null; };
+const usaFusible = o => o.tipo !== "int" && o.tipo !== "ve" && o.tipo !== "fv" && o.tipo !== "loc";
+const kDim = o => o.kd || (o.tipo === "fv" ? 1.25 : 1);   // ITC-BT-40: cables para el 125 % de la intensidad del generador
 
 function fusDistribuidora(o) {
   const kw = o.P / 1000;
@@ -477,7 +529,11 @@ function evalua(o, c) {
   const okI = o.Ib * kDim(o) <= Iz + 1e-9;
   const okE = cd.pct <= o.cdt + 1e-9;
   const prot = usaFusible(o) ? fusible(o.Ib, Iz, o.cond2) : o.circ ? (o.circ.In <= Iz + 1e-9 ? {In: o.circ.In} : null) : automatico(o.Ib, Iz);
-  return {s, cable: o.tipo === "aer" ? c : null, base, nota, prys, fc, Iz, cd, okI, okE, prot, ok: okI && okE && !!prot};
+  let arr = null;   // ITC-BT-32: el arranque del motor no debe provocar más del 5 % de caída
+  if (o.rec === "asc" && o.tipo === "loc") { const ca = o.cosArr > 0 && o.cosArr <= 1 ? o.cosArr : o.cos;
+    arr = caida(Object.assign({}, o, {cos: ca, P: Math.sqrt(3) ** (o.fases === 3 ? 1 : 0) * o.U * o.Iarr * ca}), s, Iz, o.Ib);
+    arr.cos = ca; arr.lim = Math.round((5 - o.cdtInfo.gast) * 1e4) / 1e4; arr.ok = arr.pct <= arr.lim + 1e-9; }
+  return {s, cable: o.tipo === "aer" ? c : null, base, nota, prys, fc, Iz, cd, okI, okE, prot, arr, ok: okI && okE && !!prot && (!arr || arr.ok)};
 }
 
 function calcula(o) {
@@ -487,9 +543,22 @@ function calcula(o) {
     o.circ = D.ESQ.int.find(x => x.id === o.esq) || D.ESQ.int[0];
     Object.assign(o, {modoCarga: "I", I: o.circ.In, fases: 1, U: 230, cos: 1, mat: "Cu", cdt: 3});
   }
+  if (o.tipo === "loc") {   // ITC-BT-19 ap. 2.2.2 y recargos de las ITC-BT-44 y 47
+    const base = o.alim === "trafo" ? (o.uso === "alu" ? 4.5 : 6.5) : (o.uso === "alu" ? 3 : 5);
+    const sobra = o.alim === "trafo" ? 0 : (o.sobraDI > 0 ? o.sobraDI : 0), gast = o.gastada > 0 ? o.gastada : 0;
+    o.cdtInfo = {base, sobra, gast}; o.cdt = Math.round((base + sobra - gast) * 1e4) / 1e4;
+    if (o.rec === "mot" || o.rec === "asc") { o.modoCarga = "I"; o.Idim = 1.25 * o.I; }
+    else if (o.rec === "mots") { o.modoCarga = "I"; o.Imay = o.I; o.Iresto = o.Iresto > 0 ? o.Iresto : 0; o.I = o.Imay + o.Iresto; o.Idim = 1.25 * o.Imay + o.Iresto; }
+    else if (o.rec === "desc") { o.modoCarga = "P"; o.Plamp = o.P; o.P = o.kdesc * o.P; o.cos = 1; }
+    else o.rec = "gen";
+  }
   if (o.modoCarga === "I") { o.Ib = o.I; o.P = (o.fases === 3 ? r3 : 1) * o.U * o.I * o.cos; }
   else { o.Ib = o.P / ((o.fases === 3 ? r3 : 1) * o.U * o.cos); }
+  if (o.Idim) o.kd = o.Idim / o.Ib;
   const out = {o, avisos: [], errores: []};
+  if (o.tipo === "loc" && !(o.cdt > 0)) { out.errores.push("La caída ya gastada aguas arriba (" + fmtS(o.cdtInfo.gast) + " %) agota el límite disponible (" + fmtS(o.cdtInfo.base + o.cdtInfo.sobra) + " %). No queda margen para esta línea."); return out; }
+  if (o.tipo === "loc" && o.rec === "asc" && !(o.Iarr >= o.I)) { out.errores.push("Introduce la intensidad de arranque del motor; no puede ser menor que la de régimen."); return out; }
+  if (o.tipo === "loc" && o.rec === "desc" && !(o.kdesc > 0)) { out.errores.push("Introduce el coeficiente de las lámparas de descarga (1,8 si no conoces otro)."); return out; }
   if (o.tipo === "lga" && o.fases !== 3) { out.errores.push("La línea general de alimentación es siempre trifásica: tres fases y neutro (ITC-BT-14)."); return out; }
   if (o.tipo === "di" && o.fases === 1 && o.Ib > 63 + 1e-6) out.avisos.push("Suministro monofásico de más de 63 A (14,49 kW): fuera de los escalones de contratación; lo normal es pasarlo a trifásico.");
   if (o.mat === "Al" && o.aisl === "PVC" && o.tipo !== "sub" && o.metodo !== "ENT" && o.tipo !== "aer")
@@ -516,13 +585,16 @@ function calcula(o) {
   // criterio determinante
   if (o.modo !== "comp" && el.ok) {
     const prev = ev[ev.indexOf(el) - 1];
-    out.motivo = !prev ? "Sección mínima reglamentaria o tabulada" : !prev.okE ? "Caída de tensión" : !prev.okI ? "Intensidad admisible" : (usaFusible(o) ? "Coordinación con el fusible" : "Coordinación con la protección");
+    out.motivo = !prev ? "Sección mínima reglamentaria o tabulada" : !prev.okE ? "Caída de tensión" : prev.arr && !prev.arr.ok ? "Caída de tensión en el arranque" : !prev.okI ? "Intensidad admisible" : (usaFusible(o) ? "Coordinación con el fusible" : "Coordinación con la protección");
     if (prev && prev.okE && prev.okI && !prev.prot)
       {
       const fu = usaFusible(o), tope = fu && o.cond2 ? 1.45 * prev.Iz / 1.6 : prev.Iz;
       out.avisos.push("Con " + fmtS(prev.s) + " mm² bastaba por caída de tensión e intensidad admisible, pero ningún " + (fu ? "fusible" : "interruptor") + " normalizado cabe entre la intensidad máxima de la línea (" + fmt(o.Ib) + " A) y el máximo que protege ese cable (" + fmt(tope) + " A" + (fu && o.cond2 ? ", 0,91 · Icab" : "") + "). Se sube a " + fmtS(el.s) + " mm² para poder protegerlo.");
     }
   }
+  if (!usaFusible(o) && el.prot && el.prot.In > 125) out.av125 = true;
+  if (o.tipo === "loc" && o.riesgo) out.avisos.push("Local con riesgo de incendio o explosión: los cables de 5 m o más deben estar protegidos contra sobrecargas y cortocircuitos (ITC-BT-29, ap. 9.1). Esta calculadora comprueba la sobrecarga; el cortocircuito hay que justificarlo aparte.");
+  if (o.tipo === "loc" && o.rec === "desc" && Math.abs(o.kdesc - 1.8) > 1e-9) out.avisos.push("Coeficiente distinto de 1,8: la ITC-BT-44 solo lo admite si el factor de potencia de cada receptor es 0,9 o más y se conoce la carga de los equipos asociados y de arranque.");
   if (el.prys) out.avisos.push("La intensidad admisible de esta sección es un valor calculado por Prysmian; no figura en la norma UNE-HD 60364-5-52.");
   // conductores
   const s = el.s, keyS = (s === 16 ? "16" + o.mat : String(s));
@@ -574,22 +646,38 @@ function calcula(o) {
 <script>
 (() => {
 const $ = id => document.getElementById(id);
-const st = {tipo: "lga", modo: "dim"};
+const st = {tipo: "lga", modo: "dim", cadena: [], pct: null, mots: ["20", "12"]};
+// lista de motores de una línea a varios motores (ITC-BT-47, ap. 3.2 y 3.3)
+function pintaMots() {
+  $("motsList").innerHTML = st.mots.map((v, i) => `<label>Motor ${i + 1} · intensidad a plena carga (A)<span class="fila"><input class="mot" data-i="${i}" type="number" inputmode="decimal" min="0" step="0.1" value="${esc(v)}">${st.mots.length > 2 ? `<button type="button" data-q="${i}" aria-label="Quitar el motor ${i + 1}">✕</button>` : ""}</span></label>`).join("");
+}
+function leeMots() {
+  const ms = st.mots.map(parseFloat).filter(v => v > 0), ot = Math.max(0, parseFloat($("otros").value) || 0);
+  const may = ms.length ? Math.max(...ms) : 0, resto = ms.reduce((a, b) => a + b, 0) - may;
+  return {ms, ot, may, resto, dim: 1.25 * may + resto + ot};
+}
 [...document.querySelectorAll("#modoSeg button")].forEach(b => b.onclick = () => { st.modo = b.dataset.m; sync(false); });
-const esc = s => String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 const ICO = {
   lga:'<path d="M5 21V5l7-2 7 2v16"/><path d="M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1"/>',
   di:'<path d="M4 20V9l5-4 5 4v11"/><path d="M14 13h6v7"/><path d="M8 20v-5h2v5"/>',
   int:'<path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M12 20v-5m-2-2h4v-2h-4z"/>',
   ve:'<path d="M3 15v-3l2-5h9l2 5v3"/><path d="M3 15h13v2H3z"/><circle cx="6.5" cy="18" r="1.5"/><circle cx="12.5" cy="18" r="1.5"/><path d="M19 8v4a2 2 0 0 0 2 2v3"/><path d="M18 5v3h2V5"/>',
+  loc:'<path d="M3 21V10l6 3V10l6 3V4h4v17z"/><path d="M8 17h2m3 0h2"/>',
   sub:'<path d="M2 9h20"/><path d="M5 9V5m14 4V5"/><circle cx="8" cy="16" r="2.5"/><circle cx="16" cy="16" r="2.5"/><path d="M4 13l1 1m14-1 1 1M11 20l1 1"/>',
   aer:'<path d="M8 22V4m-4 3h8"/><path d="M4 7c4 4 12 4 16 0"/><path d="M20 22V5m-3 2h6"/>'};
-Object.entries(D.TIPOS).forEach(([k, v]) => {
-  const b = document.createElement("button"); b.type = "button"; b.dataset.k = k; b.id = "tipo-" + k;
-  b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICO[k] + '</svg>' + {lga:"LGA", di:"Derivación individual", int:"Vivienda", ve:"Vehículo eléctrico", sub:"Subterránea", aer:"Aérea"}[k] + '<small>' + v.itc + '</small>';
-  b.onclick = () => { st.tipo = k; sync(true); };
-  $("tipoSeg").appendChild(b);
+const NOM = {lga:"LGA", di:"Derivación individual", int:"Vivienda", ve:"Vehículo eléctrico", loc:"Interiores (no vivienda)", sub:"Subterránea", aer:"Aérea"};
+[["Redes y acometidas", ["sub","aer"]], ["Instalación de enlace", ["lga","di"]], ["Instalación interior", ["int","loc","ve"]]].forEach(([tit, ks]) => {
+  const g = document.createElement("div"); g.className = "grupo" + (ks.length === 3 ? " g3" : "");
+  g.innerHTML = "<h3>" + tit + "</h3><div class=\"tipos\"></div>";
+  ks.forEach(k => {
+    const b = document.createElement("button"); b.type = "button"; b.dataset.k = k; b.id = "tipo-" + k;
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICO[k] + '</svg>' + NOM[k] + '<small>' + D.TIPOS[k].itc + '</small>';
+    b.onclick = () => { st.tipo = k; sync(true); };
+    g.lastChild.appendChild(b);
+  });
+  $("tipoSeg").appendChild(g);
 });
 const opts = (sel, arr, keep) => { const v = sel.value; sel.innerHTML = arr.map(o => `<option value="${o[0]}">${esc(o[1])}</option>`).join(""); if (keep && arr.some(o => String(o[0]) === v)) sel.value = v; };
 opts($("dist"), [["0","En contacto"]]);
@@ -598,23 +686,53 @@ opts($("prof"), D.PROF.v.map(v => [v, fmtS(v)])); $("prof").value = "0.7";
 
 function sync(tipoCambia) {
   const t = st.tipo, enl = t === "lga" || t === "di", aer = t === "aer", sub = t === "sub";
-  [...$("tipoSeg").children].forEach(b => b.setAttribute("aria-pressed", b.dataset.k === t));
+  [...document.querySelectorAll("#tipoSeg button")].forEach(b => b.setAttribute("aria-pressed", b.dataset.k === t));
   [...$("modoSeg").children].forEach(b => b.setAttribute("aria-pressed", b.dataset.m === st.modo));
   $("lNorma").hidden = !enl;
   const esq = D.ESQ[t]; $("lEsq").hidden = !esq;
-  if (esq) { opts($("esq"), esq.map(e => [e.id, e.In ? e.n + " · " + e.In + " A, mín. " + fmtS(e.smin) + " mm²" : e.n + " · " + fmtS(e.cdt) + " %"]), !tipoCambia); }
+  if (esq) { opts($("esq"), esq.map(e => [e.id, e.In ? e.n + " · " + e.In + " A, mín. " + fmtS(e.smin) + " mm²" : e.n + " · " + fmtS(e.cdt) + " %"]), tipoCambia !== true); }
   $("lEsq").firstChild.textContent = t === "int" ? "Circuito de la vivienda" : "Esquema de instalación";
-  if (tipoCambia) {
+  const loc = t === "loc", rec = loc ? $("rec").value : "gen";
+  if (tipoCambia === true) { st.cadena = []; $("gast").value = ""; $("sobra").value = 0; }
+  if (tipoCambia === true) {
     $("cdt").value = esq ? esq[0].cdt : 5;
     $("tamb").value = sub ? 25 : 40;
-    const def = {lga:[100,"3",0.9,25], di:[5.75,"1",1,20], int:[3.68,"1",1,20], ve:[7.36,"1",1,25], fv:[5,"1",1,15], sub:[120,"3",0.9,150], aer:[30,"3",0.9,80]}[t];
+    const def = {lga:[100,"3",0.9,25], di:[5.75,"1",1,20], int:[3.68,"1",1,20], ve:[7.36,"1",1,25], loc:[10,"3",0.9,30], fv:[5,"1",1,15], sub:[120,"3",0.9,150], aer:[30,"3",0.9,80]}[t];
     $("pot").value = def[0]; $("sist").value = def[1]; $("cos").value = def[2]; $("L").value = def[3]; $("modoCarga").value = "P";
     $("mat").value = sub ? "Al" : "Cu";
   }
   // caída fijada por reglamento, salvo en redes de distribución (la ITC no da porcentaje)
-  const fija = !!esq || t === "ve" || t === "fv";
+  const fija = !!esq || t === "ve" || t === "fv" || loc;
+  // interiores que no son vivienda: límite de la ITC-BT-19 más el sobrante de la DI menos lo ya gastado
+  $("gLoc").hidden = $("lRec").hidden = $("hRec").hidden = $("lGast").hidden = $("hCdtLoc").hidden = !loc;
+  const trafo = loc && $("alim").value === "trafo";
+  $("lSobra").hidden = !loc || trafo; $("hRiesgo").hidden = !loc || $("riesgo").value !== "1";
+  $("bMots").hidden = rec !== "mots";
+  if (rec === "mots") { const m = leeMots(); $("motsCuenta").innerHTML = m.may ? "Motor mayor <b>" + fmt(m.may) + " A × 1,25 = " + fmt(1.25 * m.may) + " A</b> · resto de motores <b>" + fmt(m.resto) + " A</b> · otros receptores <b>" + fmt(m.ot) + " A</b> → el cable debe admitir <b>" + fmt(m.dim) + " A</b> (ITC-BT-47, ap. 3.2 y 3.3)." : "Introduce la intensidad de al menos un motor."; } $("lArr").hidden = $("lCosArr").hidden = $("hCosArr").hidden = rec !== "asc"; $("lKdesc").hidden = rec !== "desc";
+  $("modoCarga").parentElement.hidden = rec !== "gen";
+  if (rec === "desc") $("modoCarga").value = "P"; else if (rec !== "gen") $("modoCarga").value = "I";
+  $("lCos").hidden = $("hCos").hidden = rec === "desc";
+  if (loc) {
+    const base = trafo ? ($("uso").value === "alu" ? 4.5 : 6.5) : ($("uso").value === "alu" ? 3 : 5);
+    const sb = trafo ? 0 : Math.max(0, parseFloat($("sobra").value) || 0), ga = Math.max(0, parseFloat($("gast").value) || 0);
+    $("cdt").value = Math.round((base + sb - ga) * 1e4) / 1e4;
+    $("hCdtLoc").textContent = "Límite " + fmtS(base) + " %" + (trafo ? " desde la salida del transformador" : " desde el origen de la instalación interior") + " (ITC-BT-19). " + (trafo ? "" : "Deja 0 % si no conoces el sobrante de la derivación individual. ") + "Si esta línea cuelga de un subcuadro, pon en «ya gastada» la caída de los tramos anteriores del mismo recorrido.";
+    $("hRec").textContent = {gen:"Sin recargo. Puedes partir de la potencia o de la intensidad (por ejemplo, la de placa del equipo o el calibre del interruptor que alimenta un subcuadro).",
+      mot:"El cable se dimensiona para el 125 % de la intensidad a plena carga del motor (ITC-BT-47, ap. 3.1). Usa la intensidad de la placa.",
+      mots:"Para la línea que alimenta un cuadro o grupo de máquinas. Apunta la intensidad de placa de cada motor: la calculadora busca el mayor, le aplica el 125 % y suma el resto (ITC-BT-47, ap. 3.2 y 3.3).",
+      asc:"Como cualquier motor, 125 % de la intensidad a plena carga (ITC-BT-47, ap. 3.1). Además, el arranque no debe provocar una caída de tensión de más del 5 % (ITC-BT-32).",
+      desc:"La carga en voltamperios es 1,8 veces la potencia en vatios de las lámparas (ITC-BT-44); el coeficiente ya incluye el factor de potencia. No se aplica a lámparas LED: para ellas usa «Uso general»."}[rec];
+  }
+  const cad = $("cadena"); cad.hidden = !loc || !st.cadena.length;
+  if (!cad.hidden) {
+    const tot = st.cadena.reduce((x, c) => x + c.pct, 0);
+    cad.innerHTML = "<h3>Tramos ya calculados de este recorrido</h3><ol>" + st.cadena.map((c, i) => "<li><b>Tramo " + (i + 1) + " · " + esc(c.tit) + "</b><em>" + fmt(c.pct, 2) + " %</em><span>" + esc(c.det) + "</span></li>").join("")
+      + "</ol><div class=\"pie\"><span>Gastado hasta aquí: <b>" + fmt(tot, 2) + " %</b>. Ahora calculas el tramo " + (st.cadena.length + 1) + ".</span><div><button type=\"button\" id=\"cadU\">Quitar el último</button><button type=\"button\" id=\"cadX\">Borrar todos</button></div></div>";
+    $("cadX").onclick = () => { st.cadena = []; $("gast").value = ""; sync(false); };
+    $("cadU").onclick = () => { const c = st.cadena.pop(); const v = Math.round(((parseFloat($("gast").value) || 0) - c.pct) * 100) / 100; $("gast").value = v > 0 ? v : ""; sync(false); };
+  }
   if (esq) { const e = esq.find(x => x.id === $("esq").value) || esq[0]; $("cdt").value = e.cdt; } else if (t === "ve") $("cdt").value = 5; else if (t === "fv") $("cdt").value = 1.5;
-  $("cdt").readOnly = fija; $("tCdt").textContent = fija ? "Caída máxima reglamentaria (%)" : "Caída máxima de proyecto (%)";
+  $("cdt").readOnly = fija; $("tCdt").textContent = loc ? "Caída disponible para esta línea (%)" : fija ? "Caída máxima reglamentaria (%)" : "Caída máxima de proyecto (%)";
   // sistema: la LGA es siempre trifásica
   if (t === "lga") $("sist").value = "3"; $("sist").disabled = t === "lga";
   // aislamiento admitido en cada línea
@@ -657,9 +775,10 @@ function sync(tipoCambia) {
   }
   if (tipoCambia === "met") { $("tamb").value = ent ? 25 : 40; $("agr").value = "1"; }
   if (!ent && !aer) { const g = D.AGR_INT[(D.METODO[$("metodo").value] || {}).ag || "haz"]; $("tAgr").textContent = "Circuitos " + g.n; }
-  $("lPot").hidden = $("modoCarga").value !== "P"; $("lInt").hidden = !$("lPot").hidden;
-  $("lCond2").hidden = $("hCond2").hidden = t === "int" || t === "ve" || t === "fv";
-  $("lPot").firstChild.textContent = t === "fv" ? "Potencia nominal del inversor (kW)" : "Potencia (kW)";
+  $("lPot").hidden = $("modoCarga").value !== "P"; $("lInt").hidden = !$("lPot").hidden || rec === "mots";
+  $("lCond2").hidden = $("hCond2").hidden = t === "int" || t === "ve" || t === "fv" || loc;
+  $("lPot").firstChild.textContent = t === "fv" ? "Potencia nominal del inversor (kW)" : rec === "desc" ? "Potencia de las lámparas (kW)" : "Potencia (kW)";
+  $("lInt").firstChild.textContent = rec === "mot" ? "Intensidad a plena carga del motor (A)" : rec === "mots" ? "Intensidad del motor mayor (A)" : rec === "asc" ? "Intensidad de régimen del motor (A)" : "Intensidad (A)";
   $("lComp").hidden = st.modo !== "comp";
   $("critHint").textContent = {real:"T = T₀ + (Tmáx − T₀) · (Imax / Icab)². Se ajusta a lo cargado que va el cable: ni subestima la caída ni sobredimensiona.",
     max:"Supone el cable a su temperatura límite. Es el criterio más conservador y puede dar una sección mayor de la necesaria.",
@@ -676,17 +795,21 @@ function lee() {
     metodo: $("metodo").value, cable: $("cable").value, fam: $("fam").value, tendido: $("tendido").value,
     tamb: n("tamb"), agr: +$("agr").value, resist: +$("resist").value, prof: +$("prof").value, dist: $("dist").value,
     entubo: $("entubo").checked, sol: $("sol").checked, critT: $("critT").value, cond2: $("cond2").checked,
-    modo: st.modo, sComp: +$("sComp").value};
+    modo: st.modo, sComp: +$("sComp").value,
+    uso: $("uso").value, alim: $("alim").value, riesgo: $("riesgo").value === "1", rec: t === "loc" ? $("rec").value : "gen",
+    Iarr: n("iarr"), cosArr: n("cosarr"), kdesc: n("kdesc"), sobraDI: n("sobra"), gastada: n("gast")};
 }
 
 let ultimo = "";
 function run() {
   const o = lee();
+  if (o.rec === "mots") { const m = leeMots(); o.I = m.may; o.Iresto = m.resto + m.ot; o.mots = m.ms; o.otros = m.ot; }
+  st.pct = null; $("seguir").hidden = true;
   // secciones para el modo comprobación
   const cs = candidatos(o).map(c => typeof c === "number" ? c : c.s);
   opts($("sComp"), [...new Set(cs)].map(s => [s, fmtS(s)]), true);
   o.sComp = +$("sComp").value;
-  const val = [[o.modoCarga === "P" ? o.P : o.I, "la carga"], [o.L, "la longitud"], [o.cdt, "la caída máxima"]].find(v => !(v[0] > 0));
+  const val = [[o.modoCarga === "P" ? o.P : o.I, "la carga"], [o.L, "la longitud"], [o.tipo === "loc" ? 1 : o.cdt, "la caída máxima"]].find(v => !(v[0] > 0));
   if (val || !(o.cos > 0 && o.cos <= 1) || !isFinite(o.tamb)) {
     $("out").innerHTML = `<ul class="avisos"><li class="err">${val ? "Introduce un valor mayor que cero en " + val[1] + "." : !isFinite(o.tamb) ? "Introduce la temperatura." : "El cos φ debe estar entre 0,1 y 1."}</li></ul>`;
     ultimo = ""; $("barraS").textContent = "–"; $("barraE").textContent = "Faltan datos"; $("barraE").className = "bad"; return;
@@ -718,6 +841,7 @@ function pinta(r) {
   const ICBAD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v6m0 3.5v.5"/></svg>';
   const porque = [];
   if (!e.okI) porque.push("la intensidad máxima (" + fmt(o.Ib * kDim(o)) + " A) supera la que admite el cable (" + fmt(e.Iz) + " A)");
+  if (e.arr && !e.arr.ok) porque.push("la caída de tensión en el arranque (" + fmt(e.arr.pct, 2) + " %) supera el " + fmtS(e.arr.lim) + " % disponible");
   if (!e.okE) porque.push("la caída de tensión (" + fmt(e.cd.pct, 2) + " %) supera el límite (" + fmtS(o.cdt) + " %)");
   if (e.okI && !e.prot) porque.push("no hay " + (fus ? "fusible" : "interruptor") + " normalizado que proteja este cable");
   const pq = porque.length ? porque.join("; ") : "";
@@ -741,14 +865,17 @@ function pinta(r) {
   const barra = (t, v, pct) => `<div class="barra ${pct > 100 ? "bad" : pct > 85 ? "warn" : ""}"><div class="cab"><span>${t}</span><span>${v}</span></div><div class="pista"><i style="width:${Math.max(2, Math.min(100, pct)).toFixed(0)}%"></i></div></div>`;
   const tope = e.prot ? (fus && o.cond2 ? 1.45 * e.Iz / e.prot.k : e.Iz) : 0;
   h += `<div class="barras">` + barra("Caída de tensión", fmt(e.cd.pct, 2) + " % de " + fmtS(o.cdt) + " %", e.cd.pct / o.cdt * 100)
-    + barra("Carga del cable", fmt(o.Ib, 0) + " A de " + fmt(e.Iz, 0) + " A admitidos", o.Ib * kDim(o) / e.Iz * 100)
-    + (e.prot ? barra(fus ? "Fusible" : "Interruptor", e.prot.In + " A, máximo " + fmt(tope, 0) + " A", e.prot.In / tope * 100) : "") + `</div><dl>`;
-  h += row("Intensidad máxima de la línea (Imax)", fmt(o.Ib) + " A", o.circ ? "En vivienda es la intensidad nominal del interruptor automático del circuito, no la de los receptores (ITC-BT-25)." : o.tipo === "fv" ? "Intensidad nominal de salida del inversor. Con ella se calcula la caída de tensión." : "Intensidad máxima que va a pasar por la línea.");
+    + barra("Carga del cable", fmt(o.Ib * kDim(o), 0) + " A de " + fmt(e.Iz, 0) + " A admitidos", o.Ib * kDim(o) / e.Iz * 100)
+    + (e.prot ? (e.prot.reg ? barra("Interruptor regulable", "ajuste entre " + fmt(Math.ceil(e.prot.min), 0) + " y " + fmt(Math.floor(e.prot.max), 0) + " A", e.prot.min / e.prot.max * 100) : barra(fus ? "Fusible" : "Interruptor", e.prot.In + " A, máximo " + fmt(tope, 0) + " A", e.prot.In / tope * 100)) : "") + `</div><dl>`;
+  h += row("Intensidad máxima de la línea (Imax)", fmt(o.Ib) + " A", o.circ ? "En vivienda es la intensidad nominal del interruptor automático del circuito, no la de los receptores (ITC-BT-25)." : o.tipo === "fv" ? "Intensidad nominal de salida del inversor. Con ella se calcula la caída de tensión." : o.rec === "desc" ? "Carga de las lámparas de descarga: " + fmtS(o.kdesc) + " VA por vatio · " + fmt(o.Plamp, 0) + " W = " + fmt(o.P, 0) + " VA (ITC-BT-44)." : o.rec === "mots" ? "Suma de lo que has introducido: motores de " + o.mots.map(v => fmt(v)).join(" + ") + " A" + (o.otros ? " y " + fmt(o.otros) + " A de otros receptores." : ".") : o.rec === "mot" || o.rec === "asc" ? "Intensidad a plena carga del motor." : "Intensidad máxima que va a pasar por la línea.");
+  if (o.tipo === "loc" && o.Idim) h += row("Intensidad de cálculo del cable", fmt(o.Idim) + " A", (o.rec === "mots" ? "125 % del motor mayor más el resto: 1,25 · " + fmt(o.Imay) + " + " + fmt(o.Iresto - o.otros) + " de los demás motores + " + fmt(o.otros) + " de otros receptores (ITC-BT-47, ap. 3.2 y 3.3)." : "125 % de la intensidad a plena carga del motor: 1,25 · " + fmt(o.Ib) + " A (ITC-BT-47, ap. 3.1).") + " Debe ser menor o igual que Icab. La caída de tensión se calcula con Imax.");
   if (o.tipo === "fv") h += row("Intensidad de dimensionado (125 %)", fmt(o.Ib * 1.25) + " A", "Los cables de un generador se dimensionan para el 125 % de su intensidad máxima (ITC-BT-40). Debe ser menor o igual que Icab.");
   h += row("Intensidad admitida por el cable (Icab)" + pill(e.okI), fmt(e.Iz) + " A", "Intensidad total que admite el cable en estas condiciones de instalación. Tabla: " + fmt(e.base, 0) + " A" + (e.fc.L.length ? " × " + fmt(e.fc.F, 3) + " de corrección" : "") + ". " + esc(e.nota) + ".");
-  h += row("Caída de tensión" + pill(e.okE), fmt(e.cd.e, 2) + " V · " + fmt(e.cd.pct, 2) + " %", "Límite: " + fmtS(o.cdt) + " % (" + fmt(o.cdt * o.U / 100, 2) + " V). Conductor a " + fmt(e.cd.T, 0) + " °C, conductividad " + fmt(e.cd.g, 1) + " m/Ω·mm².");
+  h += row("Caída de tensión" + pill(e.okE), fmt(e.cd.e, 2) + " V · " + fmt(e.cd.pct, 2) + " %", (o.cdtInfo ? "Disponible: " + fmtS(o.cdtInfo.base) + " % de límite" + (o.alim === "trafo" ? " (transformador propio)" : " + " + fmtS(o.cdtInfo.sobra) + " % sobrante de la DI") + " − " + fmtS(o.cdtInfo.gast) + " % gastado aguas arriba = " + fmtS(o.cdt) + " %" : "Límite: " + fmtS(o.cdt) + " %") + " (" + fmt(o.cdt * o.U / 100, 2) + " V)" + (o.cdtInfo ? ", ITC-BT-19 ap. 2.2.2" : "") + ". Conductor a " + fmt(e.cd.T, 0) + " °C, conductividad " + fmt(e.cd.g, 1) + " m/Ω·mm².");
+  if (e.arr) h += row("Caída de tensión en el arranque" + pill(e.arr.ok), fmt(e.arr.e, 2) + " V · " + fmt(e.arr.pct, 2) + " %", "Disponible: 5 % desde el dispositivo general de protección hasta el equipo (ITC-BT-32, ap. 2) − " + fmtS(o.cdtInfo.gast) + " % gastado aguas arriba = " + fmtS(e.arr.lim) + " %. Intensidad de arranque " + fmt(o.Iarr) + " A y cos φ " + fmtS(e.arr.cos) + (o.cosArr > 0 ? " (de arranque)." : " (el de régimen, porque no se ha indicado el de arranque).") + (o.cdtInfo.gast > 0 ? " La caída aguas arriba es la calculada en régimen; durante el arranque será algo mayor." : ""));
   if (o.modo !== "comp") h += row("Sección mínima por cada criterio", (r.sCdt ? fmtS(r.sCdt) : "–") + " · " + (r.sInt ? fmtS(r.sInt) : "–") + " mm²", "Por caída de tensión y por intensidad admisible, por separado. Se adopta la que cumple ambos y permite coordinar la protección.");
   if (fus) h += row(lugar + " (Iprot)" + pill(!!e.prot), e.prot ? e.prot.In + " A gG" : "Sin calibre", e.prot ? "Intensidad nominal del fusible (Iprot). Cumple Imax ≤ Iprot ≤ Icab: " + fmt(o.Ib) + " ≤ " + e.prot.In + " ≤ " + fmt(e.Iz) + (o.cond2 ? " y " + fmtS(e.prot.k) + " · Iprot ≤ 1,45 · Icab: " + fmt(e.prot.k * e.prot.In, 0) + " ≤ " + fmt(1.45 * e.Iz, 0) + "." : ". Segunda condición de sobrecarga no aplicada.") : "No existe calibre normalizado entre Imax e Icab que cumpla las condiciones de sobrecarga con esta sección.");
+  else if (e.prot && e.prot.reg) h += row(lugar + " (Iprot)" + pill(true), e.prot.In + " A regulable", "Interruptor de " + e.prot.In + " A con el disparo térmico regulado entre " + fmt(Math.ceil(e.prot.min), 0) + " y " + fmt(Math.floor(e.prot.max), 0) + " A, para cumplir Imax ≤ Iprot ≤ Icab: " + fmt(o.Ib) + " ≤ ajuste ≤ " + fmt(e.Iz) + ". En interruptores de la UNE-EN 60947-2, I2 = 1,30 · Iprot, así que la segunda condición se cumple sola.");
   else h += row(lugar + " (Iprot)" + pill(!!e.prot), e.prot ? e.prot.In + " A" : "Sin calibre", e.prot ? "Intensidad nominal (Iprot). Cumple Imax ≤ Iprot ≤ Icab: " + fmt(o.Ib) + " ≤ " + e.prot.In + " ≤ " + fmt(e.Iz) + ". En interruptores automáticos I2 = 1,45 · Iprot, así que la segunda condición se cumple sola." : "No hay calibre normalizado entre Imax e Icab con esta sección.");
   if (x.neutro && o.tipo !== "aer") h += row("Conductor neutro", fmtS(x.neutro) + " mm²", o.tipo === "lga" ? "Tabla 1 de la ITC-BT-14, fila de fase " + fmtS(e.s) + " mm²: neutro de " + fmtS(x.neutro) + " mm²." : o.tipo === "sub" ? (tri ? "Tabla 1 de la ITC-BT-07, fila de fase " + fmtS(e.s) + " mm²: neutro de " + fmtS(x.neutro) + " mm²." : "Igual a la fase: con dos conductores no se reduce (ITC-BT-07).") : o.tipo === "int" ? "Igual a la fase (ITC-BT-25)." : "Igual a la fase (ITC-BT-19: en instalaciones interiores el neutro no se reduce salvo justificación).");
   if (x.pe) h += row("Conductor de protección", fmtS(x.pe) + " mm²", "Tabla 2 de la ITC-BT-19, mismo material que las fases. " + (e.s <= 16 ? "Fase de hasta 16 mm²: igual a la fase." : e.s <= 35 ? "Fase de más de 16 y hasta 35 mm²: 16 mm²." : "Fase de más de 35 mm²: la mitad (" + fmtS(e.s / 2) + " mm²)" + (x.pe !== e.s / 2 ? ", que se sube a la sección normalizada de " + fmtS(x.pe) + " mm²." : ".")));
@@ -760,12 +887,16 @@ function pinta(r) {
     if (r.ede.fus) h += row("Fusible que asigna e-distribución" + `<span class="pill ${r.ede.fusOk ? "ok" : "warn"}">${r.ede.fusOk ? "Protege el cable" : "No protege el cable"}</span>`, r.ede.fus + " A", "Calibre del condicionado técnico para " + fmt(o.P / 1000, 2) + " kW. " + (r.ede.fusOk ? "El cable adoptado queda protegido contra sobrecargas por este fusible." : "Con este calibre el cable no queda protegido contra sobrecargas por el fusible (haría falta Icab ≥ " + fmt(1.6 * r.ede.fus / 1.45, 0) + " A); la protección de sobrecarga recae en el interruptor general aguas abajo. Orientativo: la distribuidora decide."));
   }
   h += "</dl>";
+  if (r.av125) h += `<p class="destacado"><b>Protección de más de 125 A</b>A partir de este calibre lo habitual no es un magnetotérmico modular, sino un interruptor de caja moldeada con disparo térmico regulable (UNE-EN 60947-2). Por eso la sección no se sube para encajar un calibre fijo: basta con regular el térmico entre Imax (${fmt(o.Ib)} A) e Icab (${fmt(e.Iz)} A). Si vas a instalar un interruptor de calibre fijo, comprueba que su intensidad nominal no supere Icab.</p>`;
   const av = errs + r.avisos.map(a => `<li>${esc(a)}</li>`).join("");
   if (av) h += `<ul class="avisos">${av}</ul>`;
   // fórmulas
   const c = e.cd, F = [];
   F.push(o.modoCarga === "I" ? `Imax = ${fmt(o.Ib)} A (dato)   P = ${tri ? "√3 · " : ""}${o.U} · ${fmt(o.Ib)} · ${fmtS(o.cos)} = ${fmt(o.P, 0)} W`
     : `Imax = P / (${tri ? "√3 · " : ""}U · cos φ) = ${fmt(o.P, 0)} / (${tri ? "1,732 · " : ""}${o.U} · ${fmtS(o.cos)}) = ${fmt(o.Ib)} A`);
+  if (o.rec === "desc") F.unshift(`P = ${fmtS(o.kdesc)} · ${fmt(o.Plamp, 0)} W = ${fmt(o.P, 0)} VA  (lámparas de descarga, ITC-BT-44)`);
+  if (o.tipo === "loc" && o.Idim) F.push(o.rec === "mots" ? `Motores: ${o.mots.map(v => fmt(v)).join(", ")} A   Otros receptores: ${fmt(o.otros)} A\nI de cálculo = 1,25 · ${fmt(o.Imay)} + ${fmt(o.Iresto - o.otros)} + ${fmt(o.otros)} = ${fmt(o.Idim)} A  (debe ser ≤ Icab)` : `I de cálculo = 1,25 · ${fmt(o.Ib)} = ${fmt(o.Idim)} A  (debe ser ≤ Icab)`);
+  if (o.cdtInfo) F.push(`Caída disponible = ${fmtS(o.cdtInfo.base)} + ${fmtS(o.cdtInfo.sobra)} − ${fmtS(o.cdtInfo.gast)} = ${fmtS(o.cdt)} %`);
   if (o.tipo === "fv") F.push(`1,25 · Imax = ${fmt(o.Ib * 1.25)} A  (debe ser ≤ Icab)`);
   F.push(`Icab = ${fmt(e.base, 0)}${e.fc.L.map(f => " · " + fmt(f.v, 2)).join("")} = ${fmt(e.Iz)} A`);
   e.fc.L.forEach(f => F.push(`     ${fmt(f.v, 2)}  ${f.n}`));
@@ -773,6 +904,7 @@ function pinta(r) {
   F.push(`γ (${o.mat}, ${fmt(c.T, 0)} °C) = ${fmt(c.g, 1)} m/Ω·mm²`);
   F.push(c.X ? `R = L / (γ · S) = ${fmtS(o.L)} / (${fmt(c.g, 1)} · ${fmtS(e.s)}) = ${fmt(c.R, 4)} Ω   ${c.xtxt}\ne = ${c.k === 2 ? "2 · " : ""}(R + X · tan φ) · P / U = ${fmt(c.e, 2)} V = ${fmt(c.pct, 2)} %`
     : `e = ${c.k === 2 ? "2 · " : ""}P · L / (γ · S · U) = ${c.k === 2 ? "2 · " : ""}${fmt(o.P, 0)} · ${fmtS(o.L)} / (${fmt(c.g, 1)} · ${fmtS(e.s)} · ${o.U}) = ${fmt(c.e, 2)} V = ${fmt(c.pct, 2)} %`);
+  if (e.arr) F.push(`Arranque: e = ${fmt(e.arr.e, 2)} V = ${fmt(e.arr.pct, 2)} %  con ${fmt(o.Iarr)} A  y cos φ ${fmtS(e.arr.cos)}  (disponible ${fmtS(e.arr.lim)} %)`);
   h += `<details><summary>Fórmulas con los valores</summary><pre class="form">${esc(F.join("\n"))}</pre></details>`;
   $("out").innerHTML = h;
   $("barraS").textContent = o.tipo === "aer" ? e.cable.n : fmtS(e.s) + " mm²"; $("barraE").textContent = ok ? "Cumple" : "No cumple"; $("barraE").className = ok ? "ok" : "bad";
@@ -780,23 +912,52 @@ function pinta(r) {
   const T = [];
   T.push("CÁLCULO DE LÍNEA · " + D.TIPOS[o.tipo].n + " (" + D.TIPOS[o.tipo].itc + ")" + (o.norma === "ede" && (o.tipo === "lga" || o.tipo === "di") ? " · criterio e-distribución" : ""));
   if (esq) T.push("Esquema: " + esq.n);
+  if (o.tipo === "loc") T.push("Uso: " + (o.uso === "alu" ? "alumbrado" : "otros usos") + " · Alimentación: " + (o.alim === "trafo" ? "transformador propio" : "red") + " · Local: " + (o.riesgo ? "con riesgo de incendio o explosión" : "normal") + " · Receptor: " + $("rec").selectedOptions[0].textContent.toLowerCase());
   T.push(`Carga: ${fmt(o.P / 1000, 2)} kW, ${tri ? "trifásica 400 V" : "monofásica 230 V"}, cos φ ${fmtS(o.cos)} · Longitud: ${fmtS(o.L)} m`);
   T.push(o.tipo === "aer" ? "Cable: " + e.cable.n + ", " + (o.fam === "alm" ? "tensado con neutro fiador" : o.tendido === "tens" ? "tensado con fiador de acero" : "posado sobre fachada")
     : `Cable: ${o.mat === "Cu" ? "cobre" : "aluminio"}, ${o.aisl}, ${o.tipo === "sub" ? (o.cable === "uni" ? "terna de unipolares enterrada" : "cable tripolar enterrado") : o.metodo === "ENT" ? "enterrado bajo tubo" : D.METODO[o.metodo].n}`);
   T.push("", (o.modo === "comp" ? "Sección comprobada: " : "Sección adoptada: ") + desig + (r.motivo ? " (" + r.motivo.toLowerCase() + ")" : ""));
   T.push(`Intensidad máxima de la línea (Imax): ${fmt(o.Ib)} A`, `Intensidad admitida por el cable (Icab): ${fmt(e.Iz)} A`, `Caída de tensión: ${fmt(c.e, 2)} V (${fmt(c.pct, 2)} %), límite ${fmtS(o.cdt)} %`);
-  T.push(lugar + " (Iprot): " + (e.prot ? e.prot.In + " A" + (fus ? " gG" : "") : "sin calibre que cumpla"));
+  T.push(lugar + " (Iprot): " + (e.prot ? e.prot.In + " A" + (fus ? " gG" : e.prot.reg ? " regulable, ajuste entre " + fmt(Math.ceil(e.prot.min), 0) + " y " + fmt(Math.floor(e.prot.max), 0) + " A" : "") : "sin calibre que cumpla"));
   if (x.tuboLga) T.push("Tubo: " + x.tuboLga + " mm"); if (x.tubo) T.push("Tubo: " + x.tubo);
   if (r.ede) { if (r.ede.cgp) T.push(r.ede.cgp); if (r.ede.medida) T.push("Medida: " + r.ede.medida); if (r.ede.fus) T.push("Fusible e-distribución: " + r.ede.fus + " A (" + (r.ede.fusOk ? "protege el cable" : "no protege el cable por sí solo") + ")"); }
   T.push("Resultado: " + (ok ? "CUMPLE" : "NO CUMPLE"), "", ...F);
   if (r.errores.length || r.avisos.length) T.push("", "Avisos:", ...r.errores.concat(r.avisos).map(a => "- " + a));
   T.push("", "Cálculo orientativo según REBT. La empresa distribuidora determina la solución final.");
+  if (r.av125) T.push("", "Protección de más de 125 A: interruptor de caja moldeada con térmico regulable; ajuste entre Imax e Icab.");
   ultimo = T.join("\n");
+  st.pct = o.tipo === "loc" ? e.cd.pct : null; $("seguir").hidden = st.pct == null;
+  if (o.tipo === "loc") {
+    const rc = {gen:"Uso general", mot:"Un motor", mots:"Línea a " + (o.mots ? o.mots.length : "varios") + " motores", asc:"Ascensor o grúa", desc:"Lámparas de descarga"}[o.rec];
+    st.ult = {pct: Math.round(e.cd.pct * 100) / 100, tit: rc + " · " + fmt(o.Ib) + " A", det: fmtS(o.L) + " m · " + desig + " · " + (e.prot ? "interruptor de " + e.prot.In + " A" + (e.prot.reg ? " regulable" : "") : "sin protección válida") + (ok ? "" : " · NO CUMPLE")};
+    if (st.cadena.length) T.splice(1, 0, "Tramos anteriores del recorrido: " + st.cadena.map((c, i) => (i + 1) + ") " + c.tit + ", " + c.det + ", " + fmt(c.pct, 2) + " %").join("; "));
+    ultimo = T.join("\n");
+  }
 }
 
 document.querySelectorAll("input,select").forEach(el => el.addEventListener(el.tagName === "SELECT" || el.type === "checkbox" ? "change" : "input", ev => {
   sync(ev.target.id === "metodo" ? "met" : false);
 }));
+$("seguir").onclick = () => {
+  if (st.pct == null) return;
+  st.cadena.push(st.ult);
+  const base = parseFloat($("gast").value) || 0;
+  $("gast").value = Math.round((base + st.ult.pct) * 100) / 100;
+  $("pot").value = ""; $("int").value = ""; st.mots = ["", ""]; pintaMots(); $("otros").value = 0; $("iarr").value = ""; $("cosarr").value = ""; $("L").value = "";
+  st.modo = "dim"; sync(false);
+  document.getElementById("cCarga").scrollIntoView({behavior: "smooth", block: "start"});
+};
+pintaMots();
+$("motAdd").onclick = () => { st.mots.push(""); pintaMots(); sync(false); const f = $("motsList").querySelectorAll("input"); f[f.length - 1].focus(); };
+$("motsList").addEventListener("input", ev => { if (ev.target.classList.contains("mot")) { st.mots[+ev.target.dataset.i] = ev.target.value; sync(false); } });
+$("motsList").addEventListener("click", ev => { const q = ev.target.dataset.q; if (q != null) { st.mots.splice(+q, 1); pintaMots(); sync(false); } });
+$("reset").onclick = () => {
+  document.querySelectorAll("select").forEach(el => { el.selectedIndex = 0; });
+  document.querySelectorAll("input").forEach(el => { if (el.type === "checkbox") el.checked = el.defaultChecked; else el.value = el.defaultValue; });
+  st.modo = "dim"; st.cadena = []; st.mots = ["20", "12"]; pintaMots();
+  sync(true); $("prof").value = "0.7"; sync(false);
+  $("copiado").textContent = "Datos restablecidos"; setTimeout(() => $("copiado").textContent = "", 3000);
+};
 $("copiar").onclick = () => {
   const fin = ok => { $("copiado").textContent = ok ? "Copiado" : "Selecciona el texto y cópialo"; if (!ok) { $("resumen").hidden = false; $("resumen").value = ultimo; $("resumen").select(); } setTimeout(() => $("copiado").textContent = "", 4000); };
   if (!ultimo) return;
