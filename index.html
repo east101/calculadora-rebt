@@ -160,6 +160,7 @@ footer{color:var(--mute);font-size:12.5px;max-width:75ch}
     <label id="lMat">Material<select id="mat"><option value="Cu">Cobre</option><option value="Al">Aluminio</option></select></label>
     <label id="lAisl">Aislamiento<select id="aisl"></select></label>
     <label class="full" id="lMet">Forma de instalación<select id="metodo"></select></label>
+    <p class="hint full" id="hMet">Si la línea tiene tramos con distinta forma de instalación (por ejemplo, uno enterrado y otro por el interior), calcula con cada una y quédate con la sección mayor: manda el tramo más desfavorable.</p>
     <label class="full" id="lCable" hidden>Tipo de cable<select id="cable"><option value="uni">Terna de cables unipolares</option><option value="tri">Un cable tripolar o tetrapolar</option></select></label>
     <label class="full" id="lFam" hidden>Cable trenzado<select id="fam"><option value="al">Aluminio sin neutro fiador</option><option value="alm">Aluminio con neutro fiador de Almelec (tensado)</option><option value="cu">Cobre</option></select></label>
     <label class="full" id="lTend" hidden>Tendido<select id="tendido"><option value="pos">Posado sobre fachada</option><option value="tens">Tensado con fiador de acero</option></select></label>
@@ -625,7 +626,7 @@ function sync(tipoCambia) {
   opts($("metodo"), mets, true); if (tipoCambia === true) $("metodo").value = "B1";
   if ($("metodo").value === "ENT" && $("aisl").value === "PVC" && t === "di") $("aisl").value = "XLPE";
   const ent = sub || (enl && $("metodo").value === "ENT");
-  $("lMet").hidden = sub || aer; $("lCable").hidden = !sub; $("lFam").hidden = !aer; $("lTend").hidden = !aer || $("fam").value === "alm";
+  $("lMet").hidden = $("hMet").hidden = sub || aer; $("lCable").hidden = !sub; $("lFam").hidden = !aer; $("lTend").hidden = !aer || $("fam").value === "alm";
   $("lMat").hidden = aer || t === "int"; $("lAisl").hidden = aer;
   const viv = t === "int"; $("tL").textContent = viv ? "Longitud al punto más alejado (m)" : "Longitud (m)";
   $("cCarga").hidden = viv; $("nCable").textContent = viv ? "2" : "3"; $("vivInfo").hidden = !viv;
